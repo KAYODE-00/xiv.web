@@ -2,9 +2,11 @@
 
 import React from "react";
 import { Trash } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEditor } from "@/hooks/use-editor";
 import EditorRecursive from "./EditorRecursive";
-import { resolveDeviceStyles } from "@/lib/editor/utils";
+import { resolveElementStateStyles } from "@/lib/editor/utils";
+import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
 
 // Helper to find parent of an element
 const findParent = (elements, targetId) => {
@@ -25,10 +27,17 @@ const EditorSection = ({ element }) => {
   const { editor: editorState, dispatch } = useEditor();
   const { editor } = editorState;
   const device = editor.device;
-  const deviceStyles = resolveDeviceStyles(element.styles, device);
+  const [isHovering, setIsHovering] = React.useState(false);
+  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
+  const sectionRef = React.useRef(null);
+  const motionProps = getMotionProps(element.content, isLive);
+
+  React.useEffect(() => {
+    return setupScrollAnimation(sectionRef.current, element.content, isLive);
+  }, [element.content, isLive]);
 
   const handleDeleteElement = () => {
     dispatch({
@@ -87,11 +96,17 @@ const EditorSection = ({ element }) => {
   };
 
   return (
-    <section
+    <motion.section
+      ref={sectionRef}
+      initial={motionProps.initial}
+      animate={motionProps.animate}
+      transition={motionProps.transition}
       style={deviceStyles}
       className={getSectionStyles()}
       id="innerContainer"
       onClick={handleOnClickBody}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       {/* Element name badge */}
       {isSelected && !isLive && (
@@ -169,7 +184,7 @@ const EditorSection = ({ element }) => {
             <Trash className="w-3 h-3 text-white" />
           </div>
         )}
-    </section>
+    </motion.section>
   );
 };
 

@@ -2,9 +2,12 @@
 
 import React from "react";
 import { Trash, Copy, ArrowUp, ArrowDown, GripVertical, ClipboardPaste } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEditor } from "@/hooks/use-editor";
 import EditorRecursive from "./EditorRecursive";
 import { addVerifyElement } from "@/lib/editor/add-verify-element";
+import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
+import { resolveElementStateStyles } from "@/lib/editor/utils";
 
 const EditorContainer = ({ element }) => {
   const { content, id, styles, type } = element;
@@ -17,12 +20,12 @@ const EditorContainer = ({ element }) => {
   const device = editor.device;
 
   const dragIndexRef = React.useRef(null);
+  const containerRef = React.useRef(null);
+  const [isHovering, setIsHovering] = React.useState(false);
 
   // Resolve styles for the current device
   const getActiveStyles = () => {
-    if (!styles) return {};
-    const deviceStyles = styles[device] || styles.Desktop || styles;
-    return { ...deviceStyles };
+    return { ...resolveElementStateStyles(styles, device, isHovering) };
   };
 
   const handleOnDrop = (e) => {
@@ -99,6 +102,11 @@ const EditorContainer = ({ element }) => {
   };
   
   const containerStyles = getActiveStyles();
+  const motionProps = getMotionProps(element.content, isLive);
+
+  React.useEffect(() => {
+    return setupScrollAnimation(containerRef.current, element.content, isLive);
+  }, [element.content, isLive]);
 
   // Remove conflicting background properties if both exist
   if (containerStyles.background && containerStyles.backgroundImage) {
@@ -106,7 +114,11 @@ const EditorContainer = ({ element }) => {
   }
 
   return (
-    <div
+    <motion.div
+      ref={containerRef}
+      initial={motionProps.initial}
+      animate={motionProps.animate}
+      transition={motionProps.transition}
       style={containerStyles}
       className={`relative transition-all ${
         isSelected && !isLive ? 'border-2 border-white' : isLive ? '' : 'border border-dashed border-[#222222]'
@@ -114,6 +126,8 @@ const EditorContainer = ({ element }) => {
       onDragOver={handleDragOver}
       onDrop={handleOnDrop}
       onClick={handleOnClickBody}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       {/* Element name badge */}
       {isSelected && !isLive && !isBody && (
@@ -216,7 +230,7 @@ const EditorContainer = ({ element }) => {
 
         </div>
       ))}
-    </div>
+    </motion.div>
   );
 };
 

@@ -3,9 +3,11 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Trash } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEditor } from "@/hooks/use-editor";
-import { formatTextOnKeyboard, resolveDeviceStyles } from "@/lib/editor/utils";
+import { formatTextOnKeyboard, resolveElementStateStyles } from "@/lib/editor/utils";
 import { getSitePages } from "@/lib/actions/pages";
+import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
 
 const findParent = (elements, targetId) => {
   for (const el of elements) {
@@ -26,11 +28,18 @@ const EditorLink = ({ element }) => {
   const router = useRouter();
   const [pages, setPages] = React.useState([]);
   const device = editor.device;
-  const deviceStyles = resolveDeviceStyles(element.styles, device);
+  const [isHovering, setIsHovering] = React.useState(false);
+  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
   const isPreview = editor.previewMode;
+  const linkRef = React.useRef(null);
+  const motionProps = getMotionProps(element.content, isLive || isPreview);
+
+  React.useEffect(() => {
+    return setupScrollAnimation(linkRef.current, element.content, isLive || isPreview);
+  }, [element.content, isLive, isPreview]);
 
   React.useEffect(() => {
     let isActive = true;
@@ -176,13 +185,19 @@ const EditorLink = ({ element }) => {
     : "#";
 
   return (
-    <div
+    <motion.div
+      ref={linkRef}
+      initial={motionProps.initial}
+      animate={motionProps.animate}
+      transition={motionProps.transition}
       style={deviceStyles}
       draggable={!isLive}
       onClick={(e) => {
         if (isPreview || isLive) return;
         handleOnClickBody(e);
       }}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       className={`
         p-0.5 w-full m-1 relative text-base
         min-h-7 transition-all underline-offset-4
@@ -307,7 +322,7 @@ const EditorLink = ({ element }) => {
           <Trash className="w-3 h-3 text-white" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

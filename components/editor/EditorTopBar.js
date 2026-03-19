@@ -99,7 +99,7 @@ const EditorTopBar = ({
       className={`
         border-b flex items-center justify-between
         px-4 py-2 gap-2 transition-all
-        bg-[#0a0a0f] border-[#1e1e2e]
+        bg-black border-[#222222]
         ${editor.editor.previewMode ? "h-0 p-0 overflow-hidden" : ""}
       `}
     >
@@ -109,14 +109,14 @@ const EditorTopBar = ({
         {/* Back button */}
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-gray-400 hover:text-white
+          className="text-[#aaaaaa] hover:text-white
           transition-colors flex-shrink-0"
           title="Back to dashboard"
         >
           <ArrowLeftCircle className="w-5 h-5" />
         </button>
 
-        <div className="h-5 w-px bg-[#1e1e2e] flex-shrink-0" />
+        <div className="h-5 w-px bg-[#222222] flex-shrink-0" />
 
         {/* Site name */}
         <div className="flex flex-col min-w-0">
@@ -126,10 +126,10 @@ const EditorTopBar = ({
             onBlur={handleBlurTitleChange}
             className="bg-transparent border-none text-white
             font-semibold text-sm outline-none
-            hover:bg-white/5 rounded px-1 py-0.5
+            hover:bg-[#111111] rounded px-1 py-0.5
             max-w-[120px]"
           />
-          <span className="text-gray-600 text-[10px] flex
+          <span className="text-[#666666] text-[10px] flex
             items-center gap-1 px-1">
             <Clock className="w-2.5 h-2.5" />
             {pageDetails?.updatedAt
@@ -138,7 +138,7 @@ const EditorTopBar = ({
           </span>
         </div>
 
-        <div className="h-5 w-px bg-[#1e1e2e] flex-shrink-0" />
+        <div className="h-5 w-px bg-[#222222] flex-shrink-0" />
 
         {/* Pages dropdown */}
         {pagesDropdown && (
@@ -150,7 +150,7 @@ const EditorTopBar = ({
 
       {/* MIDDLE — Device toggle */}
       <div className="flex items-center gap-1
-        bg-[#111118] border border-[#1e1e2e]
+        bg-[#111111] border border-[#222222]
         rounded-lg p-1 flex-shrink-0">
         {[
           { value: "Desktop", icon: <Laptop className="w-4 h-4" />, label: "Desktop" },
@@ -170,8 +170,8 @@ const EditorTopBar = ({
               w-8 h-8 flex items-center justify-center
               rounded-md transition-all
               ${editor.editor.device === device.value
-                ? "bg-[#6c63ff] text-white"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                ? "bg-white text-black"
+                : "text-[#aaaaaa] hover:text-white hover:bg-[#111111]"
               }
             `}
           >
@@ -188,8 +188,8 @@ const EditorTopBar = ({
           onClick={handlePreviewClick}
           title="Preview site in new tab"
           className="w-8 h-8 flex items-center justify-center
-          rounded-md border border-[#1e1e2e] text-gray-400
-          hover:text-white hover:border-[#6c63ff] transition-all"
+          rounded-md border border-[#222222] text-[#aaaaaa]
+          hover:text-white hover:border-white transition-all"
         >
           <Eye className="w-4 h-4" />
         </button>
@@ -200,8 +200,8 @@ const EditorTopBar = ({
           disabled={editor.history.currentIndex <= 0}
           title="Undo (Ctrl+Z)"
           className="w-8 h-8 flex items-center justify-center
-          rounded-md border border-[#1e1e2e] text-gray-400
-          hover:text-white hover:border-[#6c63ff] transition-all
+          rounded-md border border-[#222222] text-[#aaaaaa]
+          hover:text-white hover:border-white transition-all
           disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <Undo2 className="w-4 h-4" />
@@ -216,19 +216,19 @@ const EditorTopBar = ({
           }
           title="Redo (Ctrl+Y)"
           className="w-8 h-8 flex items-center justify-center
-          rounded-md border border-[#1e1e2e] text-gray-400
-          hover:text-white hover:border-[#6c63ff] transition-all
+          rounded-md border border-[#222222] text-[#aaaaaa]
+          hover:text-white hover:border-white transition-all
           disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <Redo2 className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-5 bg-[#1e1e2e]" />
+        <div className="w-px h-5 bg-[#222222]" />
 
         {/* Demo Link */}
         <button className="px-3 h-8 rounded-md border
-          border-green-500/50 text-green-400 text-xs
-          font-medium hover:bg-green-500/10 transition-all">
+          border-[#222222] text-white text-xs
+          font-medium hover:bg-[#111111] transition-all">
           Demo Link
         </button>
 
@@ -236,9 +236,9 @@ const EditorTopBar = ({
         <button
           onClick={handleSave}
           disabled={isLoading || saving}
-          className="px-4 h-8 rounded-md bg-[#6c63ff]
+          className="px-4 h-8 rounded-md bg-transparent border border-white
           text-white text-xs font-bold
-          hover:bg-[#7c74ff] transition-all
+          hover:bg-white hover:text-black transition-all
           disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading || saving
@@ -254,7 +254,7 @@ const EditorTopBar = ({
         {/* Publish */}
         <button className="px-4 h-8 rounded-md
           bg-white text-black text-xs font-bold
-          hover:bg-gray-100 transition-all">
+          hover:bg-[#dddddd] transition-all">
           Publish
         </button>
       </div>

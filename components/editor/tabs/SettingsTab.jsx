@@ -261,12 +261,18 @@ const SettingsTab = () => {
     const newStyles = { ...selectedElement.styles };
 
     if (styleState === "Hover") {
-      if (!newStyles._hover) newStyles._hover = {};
-      if (!newStyles._hover[device]) newStyles._hover[device] = {};
-      newStyles._hover[device][styleProperty] = value;
+      newStyles._hover = {
+        ...newStyles._hover,
+        [device]: {
+          ...(newStyles._hover?.[device] || {}),
+          [styleProperty]: value,
+        },
+      };
     } else {
-      if (!newStyles[device]) newStyles[device] = {};
-      newStyles[device][styleProperty] = value;
+      newStyles[device] = {
+        ...(newStyles[device] || {}),
+        [styleProperty]: value,
+      };
     }
 
     dispatch({

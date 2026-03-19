@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import {
-  Type, Heading1, Image, Video, Link2, Box, Columns, GalleryHorizontal, MousePointerClick, LayoutGrid, List, FormInput, FileText, CheckSquare, ChevronDownSquare, Send, Code, Map, Timer, GalleryVertical, Folder, SlidersHorizontal, ShoppingCart, CreditCard, DollarSign, Package, Wind, View, Star, MessageSquare
+  Type, Heading1, Image, Video, Link2, Box, Columns, GalleryHorizontal, MousePointerClick, LayoutGrid, List, FormInput, FileText, CheckSquare, ChevronDownSquare, Send, Code, Map, Timer, GalleryVertical, Folder, SlidersHorizontal, ShoppingCart, CreditCard, DollarSign, Package, Wind, View, Star, MessageSquare, Navigation, PanelTop, BadgeCheck, UserCircle2, StarHalf, Users2, CircleEllipsis, Minus, ListChecks, CircleGauge, AlarmClock, Mail
 } from "lucide-react";
 
 // Section component with updated B&W styling
@@ -55,6 +55,8 @@ const COMPONENTS = {
     { type: "3Col", name: "3 Columns", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M8 3v18M16 3v18"/></svg> },
     { type: "grid", name: "Grid", icon: <LayoutGrid className="w-6 h-6 text-white" /> },
     { type: "div", name: "Div Block", icon: <Box className="w-6 h-6 text-white dashed" /> },
+    { type: "spacer", name: "Spacer", icon: <Minus className="w-6 h-6 text-white" /> },
+    { type: "divider", name: "Divider", icon: <Minus className="w-6 h-6 text-white" /> },
   ],
   Basics: [
     { type: "heading", name: "Heading", icon: <Heading1 className="w-6 h-6 text-white" /> },
@@ -63,13 +65,19 @@ const COMPONENTS = {
     { type: "button", name: "Button", icon: <MousePointerClick className="w-6 h-6 text-white" /> },
     { type: "list", name: "List", icon: <List className="w-6 h-6 text-white" /> },
     { type: "icon", name: "Icon", icon: <Star className="w-6 h-6 text-white" /> },
+    { type: "badge", name: "Badge", icon: <BadgeCheck className="w-6 h-6 text-white" /> },
+    { type: "avatar", name: "Avatar", icon: <UserCircle2 className="w-6 h-6 text-white" /> },
+    { type: "rating", name: "Rating Stars", icon: <StarHalf className="w-6 h-6 text-white" /> },
   ],
   Media: [
     { type: "image", name: "Image", icon: <Image className="w-6 h-6 text-white" /> },
     { type: "video", name: "Video", icon: <Video className="w-6 h-6 text-white" /> },
+    { type: "videoBackground", name: "Video BG", icon: <Video className="w-6 h-6 text-white stroke-1" /> },
     { type: "3D", name: "3D Model", icon: <View className="w-6 h-6 text-white" /> },
     { type: "lottie", name: "Lottie", icon: <Wind className="w-6 h-6 text-white" /> },
     { type: "gallery", name: "Gallery", icon: <GalleryHorizontal className="w-6 h-6 text-white" /> },
+    { type: "mapEmbed", name: "Map Embed", icon: <Map className="w-6 h-6 text-white" /> },
+    { type: "codeEmbed", name: "Code Embed", icon: <Code className="w-6 h-6 text-white" /> },
   ],
   Forms: [
     { type: "contactForm", name: "Form Block", icon: <Folder className="w-6 h-6 text-white" /> },
@@ -78,14 +86,29 @@ const COMPONENTS = {
     { type: "checkbox", name: "Checkbox", icon: <CheckSquare className="w-6 h-6 text-white" /> },
     { type: "select", name: "Select", icon: <ChevronDownSquare className="w-6 h-6 text-white" /> },
     { type: "submit", name: "Submit Button", icon: <Send className="w-6 h-6 text-white" /> },
+    { type: "newsletter", name: "Newsletter", icon: <Mail className="w-6 h-6 text-white" /> },
+  ],
+  Sections: [
+    { type: "navbar", name: "Navbar", icon: <Navigation className="w-6 h-6 text-white" /> },
+    { type: "hero", name: "Hero", icon: <PanelTop className="w-6 h-6 text-white" /> },
+    { type: "features", name: "Features Grid", icon: <LayoutGrid className="w-6 h-6 text-white" /> },
+    { type: "testimonial", name: "Testimonial", icon: <MessageSquare className="w-6 h-6 text-white" /> },
+    { type: "pricingCard", name: "Pricing Card", icon: <CreditCard className="w-6 h-6 text-white" /> },
+    { type: "faq", name: "FAQ Accordion", icon: <CircleEllipsis className="w-6 h-6 text-white" /> },
+    { type: "teamCard", name: "Team Card", icon: <Users2 className="w-6 h-6 text-white" /> },
+    { type: "cta", name: "CTA Section", icon: <MousePointerClick className="w-6 h-6 text-white" /> },
+    { type: "footer", name: "Footer", icon: <PanelTop className="w-6 h-6 text-white rotate-180" /> },
   ],
   Advanced: [
     { type: "map", name: "Map", icon: <Map className="w-6 h-6 text-white" /> },
     { type: "countdown", name: "Countdown", icon: <Timer className="w-6 h-6 text-white" /> },
+    { type: "progress", name: "Progress Bar", icon: <CircleGauge className="w-6 h-6 text-white" /> },
+    { type: "social", name: "Social Icons", icon: <ListChecks className="w-6 h-6 text-white" /> },
     { type: "tabs", name: "Tabs", icon: <GalleryVertical className="w-6 h-6 text-white" /> },
     { type: "accordion", name: "Accordion", icon: <SlidersHorizontal className="w-6 h-6 text-white" /> },
     { type: "customCode", name: "HTML Embed", icon: <Code className="w-6 h-6 text-white" /> },
     { type: "testimonial", name: "Testimonial", icon: <MessageSquare className="w-6 h-6 text-white" /> },
+    { type: "countdownTimer", name: "Countdown Timer", icon: <AlarmClock className="w-6 h-6 text-white" /> },
   ],
   'E-Commerce': [
     { type: "product-list", name: "Product List", icon: <Package className="w-6 h-6 text-white" /> },

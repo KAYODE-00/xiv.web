@@ -2,8 +2,10 @@
 
 import React from "react";
 import { Trash } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEditor } from "@/hooks/use-editor";
-import { resolveDeviceStyles } from "@/lib/editor/utils";
+import { resolveElementStateStyles } from "@/lib/editor/utils";
+import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
 
 const findParent = (elements, targetId) => {
   for (const el of elements) {
@@ -22,11 +24,18 @@ const EditorVideo = ({ element }) => {
   const { editor: editorState, dispatch } = useEditor();
   const { editor } = editorState;
   const device = editor.device;
-  const deviceStyles = resolveDeviceStyles(element.styles, device);
+  const [isHovering, setIsHovering] = React.useState(false);
+  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
   const isPreview = editor.previewMode;
+  const videoRef = React.useRef(null);
+  const motionProps = getMotionProps(element.content, isLive || isPreview);
+
+  React.useEffect(() => {
+    return setupScrollAnimation(videoRef.current, element.content, isLive || isPreview);
+  }, [element.content, isLive, isPreview]);
 
   const handleClickOnBody = (event) => {
     event.stopPropagation();
@@ -68,10 +77,16 @@ const EditorVideo = ({ element }) => {
     index >= 0 && parent?.content && index < parent.content.length - 1;
 
   return (
-    <div
+    <motion.div
+      ref={videoRef}
+      initial={motionProps.initial}
+      animate={motionProps.animate}
+      transition={motionProps.transition}
       style={deviceStyles}
       draggable
       onClick={handleClickOnBody}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       className={`
         p-1 w-full m-1 relative text-base
         transition-all flex items-center justify-center
@@ -173,7 +188,7 @@ const EditorVideo = ({ element }) => {
           <Trash className="w-3 h-3 text-white" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

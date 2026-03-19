@@ -32,10 +32,10 @@ const EditorSidebar = ({ siteId }) => {
   if (editor.editor.previewMode) return null;
 
   return (
-    <div className="fixed right-0 top-[57px] h-[calc(100vh-57px)] flex z-[80] bg-[#0a0a0f]">
+    <div className="fixed right-0 top-[57px] h-[calc(100vh-57px)] flex z-[80] bg-black">
 
       {/* PANEL CONTENT — wide panel */}
-      <div className="w-80 bg-[#0a0a0f] border-l border-[#1e1e2e] overflow-y-auto h-full">
+      <div className="w-80 bg-black border-l border-[#222222] overflow-y-auto h-full">
         {activeTab === "Settings" && <SettingsTab />}
         {activeTab === "Media" && <MediaTab siteId={siteId} />}
         {activeTab === "Components" && <ComponentsTab />}
@@ -43,7 +43,7 @@ const EditorSidebar = ({ siteId }) => {
       </div>
 
       {/* TAB ICONS — narrow icon bar on far right */}
-      <div className="w-14 bg-[#0a0a0f] border-l border-[#1e1e2e] flex flex-col items-center gap-2 py-3">
+      <div className="w-14 bg-black border-l border-[#222222] flex flex-col items-center gap-2 py-3">
         {TABS.map((tab) => (
           <button
             key={tab.value}
@@ -51,8 +51,8 @@ const EditorSidebar = ({ siteId }) => {
             title={tab.label}
             className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border ${
               activeTab === tab.value
-                ? "bg-[#6c63ff] border-[#6c63ff] text-white shadow-[0_0_0_2px_rgba(108,99,255,0.2)]"
-                : "border-[#1e1e2e] text-[#8888aa] hover:text-[#f0f0f8] hover:border-[#6c63ff] hover:bg-white/5"
+                ? "bg-white border-white text-black"
+                : "border-[#222222] text-[#aaaaaa] hover:text-white hover:border-white hover:bg-[#111111]"
             }`}
           >
             {tab.icon}
