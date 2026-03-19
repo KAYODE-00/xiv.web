@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trash, Copy, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { Trash, Copy, ArrowUp, ArrowDown, GripVertical, ClipboardPaste } from "lucide-react";
 import { useEditor } from "@/hooks/use-editor";
 import EditorRecursive from "./EditorRecursive";
 import { addVerifyElement } from "@/lib/editor/add-verify-element";
@@ -58,6 +58,45 @@ const EditorContainer = ({ element }) => {
       elementDetails: { ...element, content: newContent },
     });
   };
+
+  const cloneWithNewIds = (node) => {
+    const next = {
+      ...node,
+      id: crypto.randomUUID(),
+    };
+    if (Array.isArray(node.content)) {
+      next.content = node.content.map(cloneWithNewIds);
+    } else if (node.content && typeof node.content === "object") {
+      next.content = { ...node.content };
+    }
+    if (node.styles && typeof node.styles === "object") {
+      next.styles = JSON.parse(JSON.stringify(node.styles));
+    }
+    return next;
+  };
+
+  const copyChildToClipboard = (child) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("xiv-builder-element-clipboard", JSON.stringify(child));
+  };
+
+  const pasteChildFromClipboard = () => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem("xiv-builder-element-clipboard");
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: cloneWithNewIds(parsed),
+        },
+      });
+    } catch {
+      window.localStorage.removeItem("xiv-builder-element-clipboard");
+    }
+  };
   
   const containerStyles = getActiveStyles();
 
@@ -80,6 +119,22 @@ const EditorContainer = ({ element }) => {
       {isSelected && !isLive && !isBody && (
         <div className="absolute -top-6 -left-[1px] bg-white text-black text-xs font-bold px-2 py-0.5 rounded-t-sm z-10">
           {element.name}
+        </div>
+      )}
+
+      {isSelected && !isLive && (
+        <div className="absolute -top-6 right-0 z-20">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              pasteChildFromClipboard();
+            }}
+            className="h-6 px-2 flex items-center gap-1 bg-black border border-[#333333] text-[#aaaaaa] hover:text-white hover:border-white text-[10px] font-semibold"
+            title="Paste copied element"
+          >
+            <ClipboardPaste className="w-3 h-3" />
+            Paste
+          </button>
         </div>
       )}
 
@@ -135,6 +190,7 @@ const EditorContainer = ({ element }) => {
                  <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    copyChildToClipboard(child);
                     handleAction('DUPLICATE_ELEMENT', { elementDetails: child });
                   }}
                   className="w-7 h-7 flex items-center justify-center text-[#aaaaaa] hover:bg-[#222222] hover:text-white rounded-sm transition-all"

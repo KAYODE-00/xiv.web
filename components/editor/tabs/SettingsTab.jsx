@@ -225,6 +225,38 @@ const SettingsTab = () => {
 
   const activeStyles = getStyleObject();
 
+  const parseTransform = (transform = "") => {
+    const read = (regex, fallback = "") => {
+      const match = transform.match(regex);
+      return match ? match[1] : fallback;
+    };
+    return {
+      translateX: read(/translateX\(([^)]+)\)/),
+      translateY: read(/translateY\(([^)]+)\)/),
+      scale: read(/scale\(([^)]+)\)/, "1"),
+      rotate: read(/rotate\(([^)]+)\)/, "0deg"),
+      skewX: read(/skewX\(([^)]+)\)/, "0deg"),
+      skewY: read(/skewY\(([^)]+)\)/, "0deg"),
+    };
+  };
+
+  const transformState = parseTransform(activeStyles.transform || "");
+
+  const handleTransformChange = (part, value) => {
+    const next = { ...transformState, [part]: value };
+    const transformString = [
+      next.translateX ? `translateX(${next.translateX})` : "",
+      next.translateY ? `translateY(${next.translateY})` : "",
+      next.scale ? `scale(${next.scale})` : "",
+      next.rotate ? `rotate(${next.rotate})` : "",
+      next.skewX ? `skewX(${next.skewX})` : "",
+      next.skewY ? `skewY(${next.skewY})` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    handleStyleChange("transform", transformString);
+  };
+
   const handleStyleChange = (styleProperty, value) => {
     const newStyles = { ...selectedElement.styles };
 
@@ -416,10 +448,12 @@ const SettingsTab = () => {
 
         <Section title="Transforms">
           <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1"><Label>Translate X</Label><Input id="transform.translateX" placeholder="0px" /></div>
-            <div className="flex flex-col gap-1"><Label>Translate Y</Label><Input id="transform.translateY" placeholder="0px" /></div>
-            <div className="flex flex-col gap-1"><Label>Scale</Label><Input id="transform.scale" placeholder="1"/></div>
-            <div className="flex flex-col gap-1"><Label>Rotate</Label><Input id="transform.rotate" placeholder="0deg"/></div>
+            <div className="flex flex-col gap-1"><Label>Translate X</Label><Input value={transformState.translateX} placeholder="0px" onChange={(e) => handleTransformChange("translateX", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Translate Y</Label><Input value={transformState.translateY} placeholder="0px" onChange={(e) => handleTransformChange("translateY", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Scale</Label><Input value={transformState.scale} placeholder="1" onChange={(e) => handleTransformChange("scale", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Rotate</Label><Input value={transformState.rotate} placeholder="0deg" onChange={(e) => handleTransformChange("rotate", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Skew X</Label><Input value={transformState.skewX} placeholder="0deg" onChange={(e) => handleTransformChange("skewX", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Skew Y</Label><Input value={transformState.skewY} placeholder="0deg" onChange={(e) => handleTransformChange("skewY", e.target.value)} /></div>
           </div>
         </Section>
 
@@ -431,7 +465,11 @@ const SettingsTab = () => {
         </Section>
 
         <Section title="Animations (WIP)">
-           <div className="flex flex-col gap-2"><Label>Scroll Animation</Label><SelectInput options={[{value: 'none', label: 'None'},{value: 'fadeIn', label: 'Fade In'}, {value: 'slideInLeft', label: 'Slide In Left'}, {value: 'slideInRight', label: 'Slide In Right'}]} /></div>
+           <div className="flex flex-col gap-2"><Label>Scroll Animation</Label><SelectInput value={selectedElement.content?.scrollAnimation || "none"} onChange={(v) => handleContentChange({ target: { id: "scrollAnimation", value: v } })} options={[{value: 'none', label: 'None'},{value: 'fadeIn', label: 'Fade In'}, {value: 'slideInLeft', label: 'Slide In Left'}, {value: 'slideInRight', label: 'Slide In Right'}]} /></div>
+           <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1"><Label>Duration (s)</Label><Input id="animationDuration" value={selectedElement.content?.animationDuration} placeholder="0.6" onChange={handleContentChange} /></div>
+            <div className="flex flex-col gap-1"><Label>Delay (s)</Label><Input id="animationDelay" value={selectedElement.content?.animationDelay} placeholder="0" onChange={handleContentChange} /></div>
+           </div>
         </Section>
         
         <Section title="Custom CSS">
@@ -439,6 +477,8 @@ const SettingsTab = () => {
                 <Label>Add your own CSS</Label>
                 <textarea 
                     placeholder="selector { color: white; }"
+                    value={selectedElement.content?.customCss || ""}
+                    onChange={(e) => handleContentChange({ target: { id: "customCss", value: e.target.value } })}
                     className="w-full h-32 p-2.5 text-sm font-mono rounded bg-black border border-[#222222] text-white placeholder:text-[#666666] outline-none focus:border-white transition-all resize-none"
                 />
             </div>

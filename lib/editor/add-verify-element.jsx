@@ -7,6 +7,29 @@ const buildDeviceStyles = (baseStyles) => ({
   Mobile: { ...baseStyles },
 });
 
+const createTextElement = (name, type, innerText, extraStyles = {}) => ({
+  content: { innerText },
+  id: uuidv4(),
+  name,
+  type,
+  styles: buildDeviceStyles({
+    color: "#ffffff",
+    ...defaultStyles,
+    ...extraStyles,
+  }),
+});
+
+const createContainerElement = (name, type, extraStyles = {}, children = []) => ({
+  content: children,
+  id: uuidv4(),
+  name,
+  type,
+  styles: buildDeviceStyles({
+    ...defaultStyles,
+    ...extraStyles,
+  }),
+});
+
 export const addVerifyElement = (componentType, id, dispatch) => {
   switch (componentType) {
     case "text": {
@@ -14,18 +37,7 @@ export const addVerifyElement = (componentType, id, dispatch) => {
         type: "ADD_ELEMENT",
         payload: {
           containerId: id,
-          elementDetails: {
-            content: {
-              innerText: "Text Element",
-            },
-            id: uuidv4(),
-            name: "Text",
-            type: "text",
-            styles: buildDeviceStyles({
-              color: "black",
-              ...defaultStyles,
-            }),
-          },
+          elementDetails: createTextElement("Text", "text", "Text Element"),
         },
       });
       break;
@@ -45,7 +57,7 @@ export const addVerifyElement = (componentType, id, dispatch) => {
         name: "Image",
         type: "image",
         styles: buildDeviceStyles({
-          color: "black",
+          color: "#ffffff",
           width: "1000px",
           height: "600px",
           aspectRatio: "1/1",
@@ -64,23 +76,12 @@ case "section": {
     type: "ADD_ELEMENT",
     payload: {
       containerId: id,
-      elementDetails: {
-        content: [
-          {
-            content: [],
-            id: uuidv4(),
-            name: "Container",
-            styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-            type: "container",
-          },
-        ],
-        id: uuidv4(),
-        name: "Section",
-        type: "section",
-        styles: buildDeviceStyles({
-          ...defaultStyles,
-        }),
-      },
+      elementDetails: createContainerElement(
+        "Section",
+        "section",
+        {},
+        [createContainerElement("Container", "container", { width: "100%" }, [])]
+      ),
     },
   });
   break;
@@ -91,15 +92,7 @@ case "container": {
     type: "ADD_ELEMENT",
     payload: {
       containerId: id,
-      elementDetails: {
-        content: [],
-        id: uuidv4(),
-        name: "Container",
-        type: "container",
-        styles: buildDeviceStyles({
-          ...defaultStyles,
-        }),
-      },
+      elementDetails: createContainerElement("Container", "container"),
     },
   });
   break;
@@ -111,17 +104,11 @@ case "link": {
     payload: {
       containerId: id,
       elementDetails: {
+        ...createTextElement("Link", "link", "Link Element", { textDecoration: "underline" }),
         content: {
           innerText: "Link Element",
           href: "#",
         },
-        id: uuidv4(),
-        name: "Link",
-        styles: buildDeviceStyles({
-          color: "black",
-          ...defaultStyles,
-        }),
-        type: "link",
       },
     },
   });
@@ -190,28 +177,15 @@ case "2Col": {
     type: "ADD_ELEMENT",
     payload: {
       containerId: id,
-      elementDetails: {
-        content: [
-          {
-            content: [],
-            id: uuidv4(),
-            name: "Container",
-            styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-            type: "container",
-          },
-          {
-            content: [],
-            id: uuidv4(),
-            name: "Container",
-            styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-            type: "container",
-          },
-        ],
-        id: uuidv4(),
-        name: "Two Columns",
-        styles: buildDeviceStyles({ ...defaultStyles, display: "flex" }),
-        type: "2Col",
-      },
+      elementDetails: createContainerElement(
+        "Two Columns",
+        "2Col",
+        { display: "flex" },
+        [
+          createContainerElement("Container", "container", { width: "100%" }, []),
+          createContainerElement("Container", "container", { width: "100%" }, []),
+        ]
+      ),
     },
   });
   break;
@@ -222,38 +196,201 @@ case "3Col": {
         type: "ADD_ELEMENT",
         payload: {
           containerId: id,
-          elementDetails: {
-            content: [
-              {
-                content: [],
-                id: uuidv4(),
-                name: "Container",
-                styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-                type: "container",
-              },
-              {
-                content: [],
-                id: uuidv4(),
-                name: "Container",
-                styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-                type: "container",
-              },
-              {
-                content: [],
-                id: uuidv4(),
-                name: "Container",
-                styles: buildDeviceStyles({ ...defaultStyles, width: "100%" }),
-                type: "container",
-              },
-            ],
-            id: uuidv4(),
-            name: "Three Columns",
-            styles: buildDeviceStyles({ ...defaultStyles, display: "flex" }),
-            type: "3Col",
-          },
+          elementDetails: createContainerElement(
+            "Three Columns",
+            "3Col",
+            { display: "flex" },
+            [
+              createContainerElement("Container", "container", { width: "100%" }, []),
+              createContainerElement("Container", "container", { width: "100%" }, []),
+              createContainerElement("Container", "container", { width: "100%" }, []),
+            ]
+          ),
         },
       });
       break;
     }
+
+    case "heading":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createTextElement("Heading", "text", "Heading", {
+            fontSize: "48px",
+            fontWeight: "800",
+            lineHeight: "1.2",
+          }),
+        },
+      });
+      break;
+
+    case "button":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: {
+            ...createTextElement("Button", "link", "Button", {
+              display: "inline-block",
+              paddingTop: "12px",
+              paddingBottom: "12px",
+              paddingLeft: "20px",
+              paddingRight: "20px",
+              border: "1px solid #222222",
+              background: "#ffffff",
+              color: "#000000",
+              textDecoration: "none",
+              fontWeight: "700",
+            }),
+            content: {
+              innerText: "Button",
+              href: "#",
+            },
+          },
+        },
+      });
+      break;
+
+    case "div":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Div Block", "container", {
+            minHeight: "80px",
+            border: "1px solid #222222",
+          }),
+        },
+      });
+      break;
+
+    case "grid":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Grid", "container", {
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: "16px",
+          }),
+        },
+      });
+      break;
+
+    case "navbar":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Navbar", "container", {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: "12px",
+            paddingBottom: "12px",
+            borderBottom: "1px solid #222222",
+          }),
+        },
+      });
+      break;
+
+    case "hero":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Hero", "section", {
+            paddingTop: "80px",
+            paddingBottom: "80px",
+            textAlign: "center",
+          }),
+        },
+      });
+      break;
+
+    case "features":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Features Grid", "container", {
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: "20px",
+          }),
+        },
+      });
+      break;
+
+    case "faq":
+    case "accordion":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("FAQ Accordion", "container", {
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }),
+        },
+      });
+      break;
+
+    case "footer":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Footer", "section", {
+            borderTop: "1px solid #222222",
+            paddingTop: "24px",
+            paddingBottom: "24px",
+          }),
+        },
+      });
+      break;
+
+    case "spacer":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Spacer", "container", {
+            height: "40px",
+          }),
+        },
+      });
+      break;
+
+    case "divider":
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createContainerElement("Divider", "container", {
+            height: "1px",
+            background: "#222222",
+            width: "100%",
+          }),
+        },
+      });
+      break;
+
+    default:
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          containerId: id,
+          elementDetails: createTextElement(
+            componentType,
+            "text",
+            `${componentType} element`
+          ),
+        },
+      });
+      break;
   }
 };

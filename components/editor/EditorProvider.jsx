@@ -99,6 +99,43 @@ const deleteElement = (elements, action) => {
   }, []);
 };
 
+const cloneElementWithNewIds = (element) => {
+  const next = {
+    ...element,
+    id: crypto.randomUUID(),
+  };
+  if (Array.isArray(element.content)) {
+    next.content = element.content.map(cloneElementWithNewIds);
+  } else if (element.content && typeof element.content === "object") {
+    next.content = { ...element.content };
+  }
+  if (element.styles && typeof element.styles === "object") {
+    next.styles = JSON.parse(JSON.stringify(element.styles));
+  }
+  return next;
+};
+
+const duplicateElement = (elements, targetId) => {
+  let didDuplicate = false;
+  const walk = (items) =>
+    items.map((item) => {
+      if (!Array.isArray(item.content)) return item;
+      const nextContent = [];
+      item.content.forEach((child) => {
+        nextContent.push(child);
+        if (child.id === targetId) {
+          nextContent.push(cloneElementWithNewIds(child));
+          didDuplicate = true;
+        }
+      });
+      return {
+        ...item,
+        content: walk(nextContent),
+      };
+    });
+  return { elements: walk(elements), didDuplicate };
+};
+
 const normalizeElements = (elements) =>
   elements.map((element) => {
     const next = { ...element };
@@ -161,6 +198,18 @@ const editorReducer = (state = initialState, action) => {
       return updateStateWithHistory(state, updatedEditor);
     }
 
+    case "DUPLICATE_ELEMENT": {
+      const targetId = action.payload?.elementDetails?.id;
+      if (!targetId) return state;
+      const result = duplicateElement(state.editor.elements, targetId);
+      if (!result.didDuplicate) return state;
+      const updatedEditor = {
+        ...state.editor,
+        elements: result.elements,
+      };
+      return updateStateWithHistory(state, updatedEditor);
+    }
+
     case "CHANGE_CLICKED_ELEMENT": {
       return {
         ...state,
@@ -180,6 +229,25 @@ const editorReducer = (state = initialState, action) => {
 
     case "TOGGLE_PREVIEW_MODE":
       return { ...state, editor: { ...state.editor, previewMode: !state.editor.previewMode } };
+
+    case "TOGGLE_LIVE_MODE": {
+      if (typeof action.payload?.value === "boolean") {
+        return {
+          ...state,
+          editor: { ...state.editor, liveMode: action.payload.value },
+        };
+      }
+      return {
+        ...state,
+        editor: { ...state.editor, liveMode: !state.editor.liveMode },
+      };
+    }
+
+    case "SET_PAGE_ID":
+      return {
+        ...state,
+        editor: { ...state.editor, pageId: action.payload?.pageId || "" },
+      };
 
     case "UNDO": {
       if (state.history.currentIndex > 0) {
@@ -212,6 +280,15 @@ const editorReducer = (state = initialState, action) => {
           ...initialState.editor,
           elements: normalizeElements(action.payload.elements || initialEditorState.elements),
           liveMode: !!action.payload.withLive,
+        },
+      };
+
+    case "CLEAR_HISTORY":
+      return {
+        ...state,
+        history: {
+          currentIndex: 0,
+          history: [{ ...state.editor }],
         },
       };
 
