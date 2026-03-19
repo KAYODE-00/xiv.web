@@ -326,7 +326,15 @@ const BuilderInner = ({ siteId }) => {
       router.push(`/builder/${siteId}?page=${newPage.id}`);
       setPageDetails(newPage);
     } catch (err) {
-      console.error("Create page error:", err?.message || err);
+      console.error("Create page error:", err);
+      if (err?.code) {
+        console.error("Supabase error details:", {
+          code: err.code,
+          message: err.message,
+          details: err.details,
+          hint: err.hint,
+        });
+      }
     }
   };
 

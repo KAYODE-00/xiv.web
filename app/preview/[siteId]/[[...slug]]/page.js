@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getSite } from "@/lib/actions/sites";
 import EditorRecursive from "@/components/editor/elements/editor-elements/EditorRecursive";
 import EditorProvider from "@/components/editor/EditorProvider";
 import { useEditor } from "@/hooks/use-editor";
@@ -72,7 +71,13 @@ const PreviewPage = () => {
   useEffect(() => {
     const fetchPage = async () => {
       try {
-        const site = await getSite(siteId);
+        const res = await fetch(`/api/sites/${siteId}`);
+        if (!res.ok) {
+          setNotFound(true);
+          return;
+        }
+
+        const site = await res.json();
         if (!site?.pages?.length) {
           setNotFound(true);
           return;

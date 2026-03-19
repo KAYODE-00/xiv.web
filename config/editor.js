@@ -1,12 +1,12 @@
 export const defaultStyles = {
-    backgroundPosition: "center",
-    objectFit: "cover",
-    backgroundRepeat: "no-repeat",
-    textAlign: "center",
-    opacity: "100%",
-  };
+  backgroundPosition: "center",
+  objectFit: "cover",
+  backgroundRepeat: "no-repeat",
+  textAlign: "center",
+  opacity: "100%",
+};
 
-  export const GOOGLE_FONTS = [
+export const GOOGLE_FONTS = [
   "Inter", "Manrope", "Roboto", "Poppins", "Lato", "Montserrat", "Oswald", "Raleway",
   "Nunito", "Merriweather", "Playfair Display", "Fira Sans", "Work Sans", "Ubuntu",
   "Source Sans Pro", "PT Sans", "Open Sans", "Dosis", "Exo 2", "Josefin Sans",

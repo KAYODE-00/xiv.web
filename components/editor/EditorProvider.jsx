@@ -35,18 +35,11 @@ const initialState = {
   history: initialHistoryState,
 };
 
+/** * RECURSIVE HELPERS 
+ */
 const addElement = (elements, action) => {
-  if (action.type !== "ADD_ELEMENT") {
-    throw Error(
-      "You sent the wrong action type to the Add Element editor state"
-    );
-  }
-
   return elements.map((element) => {
-    if (
-      element.id === action.payload.containerId &&
-      Array.isArray(element.content)
-    ) {
+    if (element.id === action.payload.containerId && Array.isArray(element.content)) {
       return {
         ...element,
         content: [...element.content, action.payload.elementDetails],
@@ -62,18 +55,9 @@ const addElement = (elements, action) => {
 };
 
 const updateElement = (elements, action) => {
-  if (action.type !== "UPDATE_ELEMENT") {
-    throw Error(
-      "You sent the wrong action type to the Update Element editor state"
-    );
-  }
-
   return elements.map((element) => {
     if (element.id === action.payload.elementDetails.id) {
-      return {
-        ...element,
-        ...action.payload.elementDetails,
-      };
+      return { ...element, ...action.payload.elementDetails };
     } else if (element.content && Array.isArray(element.content)) {
       return {
         ...element,
@@ -84,28 +68,32 @@ const updateElement = (elements, action) => {
   });
 };
 
-const deleteElement = (elements, action) => {
-  if (action.type !== "DELETE_ELEMENT") {
-    throw Error(
-      "You sent the wrong action type to the Delete Element editor state"
-    );
-  }
-
-  return elements.reduce((acc, element) => {
-    if (element.id === action.payload.elementDetails.id) {
-      return acc;
+// NEW: Helper to update nested styles deeply
+const updateStyles = (elements, elementId, styles) => {
+  return elements.map((element) => {
+    if (element.id === elementId) {
+      return {
+        ...element,
+        styles: { ...element.styles, ...styles },
+      };
+    } else if (element.content && Array.isArray(element.content)) {
+      return {
+        ...element,
+        content: updateStyles(element.content, elementId, styles),
+      };
     }
+    return element;
+  });
+};
 
+const deleteElement = (elements, action) => {
+  return elements.reduce((acc, element) => {
+    if (element.id === action.payload.elementDetails.id) return acc;
     if (Array.isArray(element.content)) {
       const nextContent = deleteElement(element.content, action);
-      acc.push(
-        nextContent === element.content
-          ? element
-          : { ...element, content: nextContent }
-      );
+      acc.push(nextContent === element.content ? element : { ...element, content: nextContent });
       return acc;
     }
-
     acc.push(element);
     return acc;
   }, []);
@@ -114,98 +102,63 @@ const deleteElement = (elements, action) => {
 const normalizeElements = (elements) =>
   elements.map((element) => {
     const next = { ...element };
-    if (next.styles && next.styles.background && !next.styles.backgroundColor) {
-      const { background, ...restStyles } = next.styles;
-      next.styles = { ...restStyles, backgroundColor: background };
-    }
     if (Array.isArray(next.content)) {
       next.content = normalizeElements(next.content);
     }
     return next;
   });
 
+/**
+ * REDUCER
+ */
 const editorReducer = (state = initialState, action) => {
   switch (action.type) {
-
     case "ADD_ELEMENT": {
       const updatedEditor = {
         ...state.editor,
         elements: addElement(state.editor.elements, action),
       };
-
-      const updatedHistory = [
-        ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditor },
-      ];
-
-      return {
-        ...state,
-        editor: updatedEditor,
-        history: {
-          ...state.history,
-          history: updatedHistory,
-          currentIndex: updatedHistory.length - 1,
-        },
-      };
+      return updateStateWithHistory(state, updatedEditor);
     }
 
     case "UPDATE_ELEMENT": {
       const updatedElements = updateElement(state.editor.elements, action);
-      const isUpdatedElementSelected =
-        state.editor.selectedElement.id === action.payload.elementDetails.id;
-
       const updatedEditor = {
         ...state.editor,
         elements: updatedElements,
-        selectedElement: isUpdatedElementSelected
-          ? action.payload.elementDetails
-          : {
-              id: "",
-              content: [],
-              name: "",
-              styles: {},
-              type: null,
-            },
+        selectedElement: state.editor.selectedElement.id === action.payload.elementDetails.id
+          ? { ...state.editor.selectedElement, ...action.payload.elementDetails }
+          : state.editor.selectedElement,
       };
+      return updateStateWithHistory(state, updatedEditor);
+    }
 
-      const updatedHistory = [
-        ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditor },
-      ];
-
-      return {
-        ...state,
-        editor: updatedEditor,
-        history: {
-          ...state.history,
-          history: updatedHistory,
-          currentIndex: updatedHistory.length - 1,
-        },
+    // NEW ACTION: Specific for styling to prevent full object overrides
+    case "UPDATE_STYLES": {
+      const updatedElements = updateStyles(
+        state.editor.elements,
+        action.payload.elementId,
+        action.payload.styles
+      );
+      
+      const isSelected = state.editor.selectedElement.id === action.payload.elementId;
+      
+      const updatedEditor = {
+        ...state.editor,
+        elements: updatedElements,
+        selectedElement: isSelected 
+          ? { ...state.editor.selectedElement, styles: { ...state.editor.selectedElement.styles, ...action.payload.styles } }
+          : state.editor.selectedElement,
       };
+      return updateStateWithHistory(state, updatedEditor);
     }
 
     case "DELETE_ELEMENT": {
-      const updatedElements = deleteElement(state.editor.elements, action);
-
       const updatedEditor = {
         ...state.editor,
-        elements: updatedElements,
+        elements: deleteElement(state.editor.elements, action),
       };
-
-      const updatedHistory = [
-        ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditor },
-      ];
-
-      return {
-        ...state,
-        editor: updatedEditor,
-        history: {
-          ...state.history,
-          history: updatedHistory,
-          currentIndex: updatedHistory.length - 1,
-        },
-      };
+      return updateStateWithHistory(state, updatedEditor);
     }
 
     case "CHANGE_CLICKED_ELEMENT": {
@@ -213,13 +166,7 @@ const editorReducer = (state = initialState, action) => {
         ...state,
         editor: {
           ...state.editor,
-          selectedElement: action.payload.elementDetails || {
-            id: "",
-            content: [],
-            name: "",
-            styles: {},
-            type: null,
-          },
+          selectedElement: action.payload.elementDetails || initialEditorState.selectedElement,
         },
       };
     }
@@ -227,44 +174,23 @@ const editorReducer = (state = initialState, action) => {
     case "CHANGE_DEVICE": {
       return {
         ...state,
-        editor: {
-          ...state.editor,
-          device: action.payload.device,
-        },
+        editor: { ...state.editor, device: action.payload.device },
       };
     }
 
-    case "TOGGLE_PREVIEW_MODE": {
-      return {
-        ...state,
-        editor: {
-          ...state.editor,
-          previewMode: !state.editor.previewMode,
-        },
-      };
-    }
+    case "TOGGLE_PREVIEW_MODE":
+      return { ...state, editor: { ...state.editor, previewMode: !state.editor.previewMode } };
 
-    case "TOGGLE_LIVE_MODE": {
-      return {
-        ...state,
-        editor: {
-          ...state.editor,
-          liveMode: action.payload
-            ? action.payload.value
-            : !state.editor.liveMode,
-        },
-      };
-    }
-
-    case "CLEAR_HISTORY": {
-      return {
-        ...state,
-        history: {
-          ...state.history,
-          history: [],
-          currentIndex: 0,
-        },
-      };
+    case "UNDO": {
+      if (state.history.currentIndex > 0) {
+        const prevIndex = state.history.currentIndex - 1;
+        return {
+          ...state,
+          editor: { ...state.history.history[prevIndex] },
+          history: { ...state.history, currentIndex: prevIndex },
+        };
+      }
+      return state;
     }
 
     case "REDO": {
@@ -273,78 +199,56 @@ const editorReducer = (state = initialState, action) => {
         return {
           ...state,
           editor: { ...state.history.history[nextIndex] },
-          history: {
-            ...state.history,
-            currentIndex: nextIndex,
-          },
+          history: { ...state.history, currentIndex: nextIndex },
         };
       }
       return state;
     }
 
-    case "UNDO": {
-      if (state.history.currentIndex > 0) {
-        const prevIndex = state.history.currentIndex - 1;
-        return {
-          ...state,
-          editor: { ...state.history.history[prevIndex] },
-          history: {
-            ...state.history,
-            currentIndex: prevIndex,
-          },
-        };
-      }
-      return state;
-    }
-
-    case "LOAD_DATA": {
+    case "LOAD_DATA":
       return {
         ...initialState,
         editor: {
           ...initialState.editor,
-          elements: normalizeElements(
-            action.payload.elements || initialEditorState.elements
-          ),
+          elements: normalizeElements(action.payload.elements || initialEditorState.elements),
           liveMode: !!action.payload.withLive,
         },
       };
-    }
 
-    case "SET_PAGE_ID": {
-      return {
-        ...state,
-        editor: {
-          ...state.editor,
-          pageId: action.payload.pageId,
-        },
-      };
-    }
-
-    default: {
+    default:
       return state;
-    }
   }
 };
 
+// Helper to keep the reducer clean
+const updateStateWithHistory = (state, updatedEditor) => {
+  const updatedHistory = [
+    ...state.history.history.slice(0, state.history.currentIndex + 1),
+    { ...updatedEditor },
+  ];
+  return {
+    ...state,
+    editor: updatedEditor,
+    history: {
+      ...state.history,
+      history: updatedHistory,
+      currentIndex: updatedHistory.length - 1,
+    },
+  };
+};
+
 export const EditorContext = React.createContext({
-  editor: initialState,
+  state: initialState,
   dispatch: () => undefined,
   siteId: "",
   pageDetails: null,
 });
 
 const EditorProvider = ({ children, siteId, pageDetails }) => {
-  const [editor, dispatch] = React.useReducer(editorReducer, initialState);
+  const [state, dispatch] = React.useReducer(editorReducer, initialState);
 
   return (
-    <EditorContext.Provider
-      value={{
-        editor,
-        dispatch,
-        siteId,
-        pageDetails,
-      }}
-    >
+    <EditorContext.Provider value={{ state, dispatch, siteId, pageDetails }}>
       {children}
     </EditorContext.Provider>
   );

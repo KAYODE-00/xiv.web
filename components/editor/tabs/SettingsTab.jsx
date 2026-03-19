@@ -1,67 +1,47 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  AlignCenter,
-  AlignHorizontalJustifyCenterIcon,
-  AlignHorizontalJustifyEnd,
-  AlignHorizontalJustifyStart,
-  AlignHorizontalSpaceAround,
-  AlignHorizontalSpaceBetween,
-  AlignLeft,
-  AlignRight,
-  AlignVerticalJustifyCenter,
-  AlignVerticalJustifyEnd,
-  AlignVerticalJustifyStart,
-  Expand,
-  GripHorizontal,
-  Italic,
-  LucideImageDown,
-  MousePointerClick,
-  RemoveFormatting,
-  Shrink,
-  Type,
-  Underline,
-  Waves,
+  AlignCenter, AlignHorizontalJustifyCenterIcon, AlignHorizontalJustifyEnd, AlignHorizontalJustifyStart, AlignHorizontalSpaceAround, AlignHorizontalSpaceBetween, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ChevronsUpDown, Code, Droplets, Expand, Eye, EyeOff, Italic, Layers, MousePointerClick, Move, Palette, Plus, RotateCw, Scale, Shrink, Sparkles, Trash2, Type, Underline, Waves, Wind
 } from "lucide-react";
 import { useEditor } from "@/hooks/use-editor";
 import { getSitePages } from "@/lib/actions/pages";
-import { ensureDeviceStyles, resolveDeviceStyles } from "@/lib/editor/utils";
+import { GOOGLE_FONTS } from "@/config/editor"; // We will create this file later
 
-// Simple reusable components replacing shadcn
+// ============================================================
+// REUSABLE UI COMPONENTS (Strict Black & White Theme)
+// ============================================================
+
 const Label = ({ children, className = "" }) => (
-  <label className={`text-[11px] font-medium text-[#8888aa] ${className}`}>
+  <label className={`text-xs font-medium text-[#aaaaaa] ${className}`}>
     {children}
   </label>
 );
 
-const Input = ({ id, placeholder, onChange, value, defaultValue, className = "" }) => (
+const Input = ({ id, placeholder, onChange, value, type = "text", className = "" }) => (
   <input
     id={id}
     placeholder={placeholder}
-    onChange={onChange}
-    value={value || ""}
-    defaultValue={defaultValue}
-    className={`w-full px-3 py-1.5 text-sm rounded-md bg-[#111118] border border-[#1e1e2e] text-[#f0f0f8] placeholder:text-[#666689] outline-none focus:border-[#6c63ff] focus:ring-2 focus:ring-[#6c63ff]/30 transition-all ${className}`}
+    onChange={onChange || (() => {})}
+    value={value ?? ""}
+    type={type}
+    className={`w-full px-2.5 py-1 text-sm rounded bg-black border border-[#222222] text-white placeholder:text-[#666666] outline-none focus:border-white transition-all ${className}`}
   />
 );
 
-const Section = ({ title, children }) => {
-  const [open, setOpen] = React.useState(true);
+const Section = ({ title, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-[#1e1e2e]">
+    <div className="border-b border-[#222222]">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between
-        px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]
-        text-[#8888aa] hover:text-[#f0f0f8]
-        hover:bg-[#111118] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#aaaaaa] hover:text-white hover:bg-[#0a0a0a] transition-colors"
       >
         {title}
-        <span className="text-[#666689]">{open ? "▲" : "▼"}</span>
+        <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▼</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 pt-2 flex flex-col gap-3">
+        <div className="px-4 pb-4 pt-2 flex flex-col gap-4">
           {children}
         </div>
       )}
@@ -69,89 +49,158 @@ const Section = ({ title, children }) => {
   );
 };
 
-const ToggleBtn = ({ value, current, onChange, title, children }) => (
-  <button
-    title={title}
-    onClick={() => onChange(value)}
-    className={`w-9 h-8 flex items-center justify-center
-    rounded-full transition-all border
-    ${current === value
-      ? "bg-[#6c63ff] border-[#6c63ff] text-white shadow-[0_0_0_2px_rgba(108,99,255,0.2)]"
-      : "border-[#1e1e2e] text-[#8888aa] hover:text-[#f0f0f8] hover:border-[#6c63ff] hover:bg-[#111118]"
-    }`}
-  >
-    {children}
-  </button>
+const ToggleBtnGroup = ({ options, value, onChange, title }) => (
+  <div>
+    {title && <Label>{title}</Label>}
+    <div className="flex gap-1 mt-1">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          title={opt.title}
+          onClick={() => onChange(opt.value)}
+          className={`flex-1 h-8 flex items-center justify-center rounded transition-all border ${
+            value === opt.value
+              ? "bg-white text-black border-white"
+              : "border-[#222222] text-[#aaaaaa] hover:text-white hover:border-[#333333] hover:bg-[#111111]"
+          }`}
+        >
+          {opt.icon}
+        </button>
+      ))}
+    </div>
+  </div>
 );
 
 const SelectInput = ({ value, onChange, options, placeholder }) => (
-  <select
-    value={value || ""}
-    onChange={(e) => onChange(e.target.value)}
-    className="w-full px-3 py-1.5 text-sm rounded-md
-    bg-[#111118] border border-[#1e1e2e] text-[#f0f0f8]
-    outline-none focus:border-[#6c63ff] focus:ring-2 focus:ring-[#6c63ff]/30
-    transition-all"
-  >
-    <option value="" disabled>{placeholder}</option>
-    {options.map((opt) => (
-      <option key={opt.value} value={opt.value}>
-        {opt.label}
-      </option>
-    ))}
-  </select>
+  <div className="relative w-full">
+    <select
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full appearance-none px-2.5 py-1 text-sm rounded bg-black border border-[#222222] text-white outline-none focus:border-white transition-all"
+    >
+      {placeholder && <option value="" disabled>{placeholder}</option>}
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+    <ChevronsUpDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-[#666666] pointer-events-none" />
+  </div>
 );
 
-const SliderInput = ({ value, onChange, max = 100, unit = "%" }) => {
-  const numValue = typeof value === "number"
-    ? value
-    : parseFloat((value || "100").replace(unit, "")) || 100;
+const SliderInput = ({ value, onChange, max = 100, min = 0, step = 1, unit = "" }) => {
+  const numValue = typeof value === 'string'
+    ? parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0
+    : value || 0;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-end">
-        <span className="text-[11px] text-[#8888aa]">{numValue}{unit}</span>
-      </div>
+    <div className="flex items-center gap-2">
       <input
         type="range"
-        min={0}
+        min={min}
         max={max}
-        step={1}
+        step={step}
         value={numValue}
         onChange={(e) => onChange(`${e.target.value}${unit}`)}
-        className="w-full accent-[#6c63ff]"
+        className="w-full accent-white"
       />
+      <div className="w-20">
+        <Input 
+          value={`${numValue}${unit}`} 
+          onChange={(e) => onChange(e.target.value)} 
+        />
+      </div>
     </div>
   );
 };
 
 const ColorInput = ({ value, onChange, label }) => {
-  const isHex =
-    typeof value === "string" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
-  const safeValue = isHex ? value : "#000000";
+  const isHex = typeof value === "string" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
+  const safeValue = isHex ? value : "#ffffff";
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
       {label && <Label>{label}</Label>}
       <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={safeValue}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-8 h-8 rounded cursor-pointer border border-[#1e1e2e] bg-[#111118]"
-        />
-        <input
+        <div className="relative w-8 h-8 rounded border border-[#222222] bg-[#111111] overflow-hidden">
+          <input
+            type="color"
+            value={safeValue}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute -top-1 -left-1 w-10 h-10 cursor-pointer"
+          />
+        </div>
+        <Input
           type="text"
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="#000000"
-          className="flex-1 px-3 py-1.5 text-sm rounded-md
-          bg-[#111118] border border-[#1e1e2e] text-[#f0f0f8]
-          outline-none focus:border-[#6c63ff] focus:ring-2 focus:ring-[#6c63ff]/30"
+          placeholder="#FFFFFF"
         />
       </div>
     </div>
   );
+};
+
+const FourWayInput = ({ label, values, onChange }) => {
+    const sides = ['Top', 'Right', 'Bottom', 'Left'];
+    const keys = [`${label}Top`, `${label}Right`, `${label}Bottom`, `${label}Left`];
+    return (
+        <div className="flex flex-col gap-2">
+            <Label>{label.charAt(0).toUpperCase() + label.slice(1)} (px)</Label>
+            <div className="grid grid-cols-2 gap-2">
+                {sides.map((side, i) => (
+                    <div key={side} className="flex flex-col gap-1">
+                        <Label className="text-[#666666]">{side}</Label>
+                        <Input
+                            id={keys[i]}
+                            placeholder="0"
+                            onChange={onChange}
+                            value={values[keys[i]]}
+                        />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const BoxShadowBuilder = ({ value, onChange }) => {
+    const shadows = value ? value.split(', ') : ['0px 0px 0px 0px #000000'];
+    // For simplicity, we edit the first shadow only in this UI
+    const firstShadow = shadows[0];
+    const parts = firstShadow.match(/(-?\d+px)|(#?\w+)/g) || ['0px', '0px', '0px', '0px', '#000000'];
+    const [hOffset, vOffset, blur, spread, color] = parts;
+
+    const updateShadow = (part, newValue) => {
+        const newParts = { hOffset, vOffset, blur, spread, color };
+        newParts[part] = newValue;
+        onChange(`${newParts.hOffset} ${newParts.vOffset} ${newParts.blur} ${newParts.spread} ${newParts.color}`);
+    };
+
+    return (
+        <div className="flex flex-col gap-3 p-3 rounded bg-[#0a0a0a] border border-[#222222]">
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                    <Label>H-Offset</Label>
+                    <Input value={hOffset} onChange={(e) => updateShadow('hOffset', e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Label>V-Offset</Label>
+                    <Input value={vOffset} onChange={(e) => updateShadow('vOffset', e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Label>Blur</Label>
+                    <Input value={blur} onChange={(e) => updateShadow('blur', e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Label>Spread</Label>
+                    <Input value={spread} onChange={(e) => updateShadow('spread', e.target.value)} />
+                </div>
+            </div>
+            <ColorInput value={color} onChange={(v) => updateShadow('color', v)} />
+        </div>
+    );
 };
 
 // ============================================================
@@ -159,568 +208,242 @@ const ColorInput = ({ value, onChange, label }) => {
 // ============================================================
 const SettingsTab = () => {
   const { editor, dispatch, siteId } = useEditor();
-  const [sitePages, setSitePages] = React.useState([]);
-  const [pagesLoading, setPagesLoading] = React.useState(false);
+  const [sitePages, setSitePages] = useState([]);
+  const [pagesLoading, setPagesLoading] = useState(false);
+  const [styleState, setStyleState] = useState("Normal"); // "Normal" or "Hover"
+
   const device = editor.editor.device || "Desktop";
+  const selectedElement = editor.editor.selectedElement;
 
-  const handleChangeCustomValues = (e) => {
-    const settingProperty = e.target.id;
-    const value = e.target.value;
+  const getStyleObject = () => {
+    if (!selectedElement.styles) return {};
+    if (styleState === "Hover") {
+      return selectedElement.styles._hover?.[device] || {};
+    }
+    return selectedElement.styles[device] || {};
+  };
+
+  const activeStyles = getStyleObject();
+
+  const handleStyleChange = (styleProperty, value) => {
+    const newStyles = { ...selectedElement.styles };
+
+    if (styleState === "Hover") {
+      if (!newStyles._hover) newStyles._hover = {};
+      if (!newStyles._hover[device]) newStyles._hover[device] = {};
+      newStyles._hover[device][styleProperty] = value;
+    } else {
+      if (!newStyles[device]) newStyles[device] = {};
+      newStyles[device][styleProperty] = value;
+    }
 
     dispatch({
       type: "UPDATE_ELEMENT",
       payload: {
         elementDetails: {
-          ...editor.editor.selectedElement,
-          content: {
-            ...editor.editor.selectedElement.content,
-            [settingProperty]: value,
-          },
+          ...selectedElement,
+          styles: newStyles,
         },
       },
     });
   };
 
-  const handleOnChanges = (e) => {
-    const styleSettings = e.target.id;
-    const value = e.target.value;
-    const nextStyles = ensureDeviceStyles(
-      editor.editor.selectedElement.styles
-    );
-    const currentDeviceStyles = nextStyles[device] || {};
-
+  const handleBulkStyleChange = (e) => {
+    handleStyleChange(e.target.id, e.target.value);
+  };
+  
+  const handleContentChange = (e) => {
     dispatch({
       type: "UPDATE_ELEMENT",
       payload: {
         elementDetails: {
-          ...editor.editor.selectedElement,
-          styles: {
-            ...nextStyles,
-            [device]: {
-              ...currentDeviceStyles,
-              [styleSettings]: value,
-            },
-          },
+          ...selectedElement,
+          content: { ...selectedElement.content, [e.target.id]: e.target.value },
         },
       },
     });
   };
 
-  const handleToggleChange = (id, value) => {
-    handleOnChanges({ target: { id, value } });
-  };
-
-  React.useEffect(() => {
-    let isActive = true;
-    const shouldLoadPages =
-      editor.editor.selectedElement?.type === "link" &&
-      !Array.isArray(editor.editor.selectedElement?.content) &&
-      siteId;
+  useEffect(() => {
+    const shouldLoadPages = selectedElement?.type === "link" && siteId;
     if (!shouldLoadPages) {
       setSitePages([]);
-      return undefined;
+      return;
     }
 
     const loadPages = async () => {
       setPagesLoading(true);
       try {
         const pages = await getSitePages(siteId);
-        if (isActive) setSitePages(pages || []);
+        setSitePages(pages || []);
       } catch {
-        if (isActive) setSitePages([]);
+        setSitePages([]);
       } finally {
-        if (isActive) setPagesLoading(false);
+        setPagesLoading(false);
       }
     };
-
     loadPages();
-    return () => {
-      isActive = false;
-    };
-  }, [
-    editor.editor.selectedElement?.type,
-    editor.editor.selectedElement?.content,
-    siteId,
-  ]);
-
+  }, [selectedElement?.id, siteId]);
+  
   // No element selected
-  if (!editor.editor.selectedElement.id) {
+  if (!selectedElement.id) {
     return (
-      <div className="flex flex-col text-[#f0f0f8]">
-        <div className="px-4 py-3 border-b border-[#1e1e2e] bg-[#0a0a0f]">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-[#8888aa]">
-            Styles
-          </div>
-          <p className="text-[#8888aa] text-xs mt-1">
-            Click any element to customize it
-          </p>
+      <div className="flex flex-col h-full bg-black text-white">
+        <div className="px-4 py-3 border-b border-[#222222] bg-[#0a0a0a]">
+          <h2 className="text-sm font-bold">Styles</h2>
+          <p className="text-[#aaaaaa] text-xs mt-1">Select an element to begin styling.</p>
         </div>
-        <div className="flex flex-col items-center justify-center
-          gap-3 py-24 text-[#666689]">
+        <div className="flex flex-col flex-grow items-center justify-center gap-3 text-[#666666]">
           <MousePointerClick className="w-8 h-8" />
-          <p className="text-sm text-center max-w-[160px]">
-            Pick a component to customize
-          </p>
+          <p className="text-sm text-center max-w-[160px]">Click an element on the canvas to edit its properties.</p>
         </div>
       </div>
     );
   }
 
-  const el = editor.editor.selectedElement;
-  const activeStyles = resolveDeviceStyles(el.styles, device);
-
   return (
-    <div className="flex flex-col text-[#f0f0f8]">
+    <div className="flex flex-col h-full bg-black text-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#1e1e2e] bg-[#0a0a0f]">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-[#8888aa]">
-          Styles
-        </div>
-        <p className="text-[#8888aa] text-xs mt-1">
-          Editing: <span className="text-[#6c63ff]">{el.name}</span>
-        </p>
-        <p className="text-[#8888aa] text-xs mt-1">
-          Device: <span className="text-[#6c63ff]">{device}</span>
-        </p>
+      <div className="px-4 py-3 border-b border-[#222222] bg-[#0a0a0a]">
+        <p className="text-sm text-white font-bold truncate">{selectedElement.name}</p>
+        <p className="text-xs text-[#aaaaaa]">Type: <span className="text-white">{selectedElement.type}</span></p>
       </div>
 
-      {/* CUSTOM SECTION */}
-      {(el.type === "link" ||
-        el.type === "video" ||
-        el.type === "contactForm" ||
-        el.type === "image") &&
-        !Array.isArray(el.content) && (
-          <Section title="Custom">
-            {el.type === "link" && (
-              <div className="flex flex-col gap-1">
-                <Label>Link Path</Label>
-                <Input
-                  id="href"
-                  placeholder="https://example.com"
-                  onChange={handleChangeCustomValues}
-                  value={el.content.href}
-                />
-                <div className="pt-2">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-[#8888aa]">
-                    Pages on this site:
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {pagesLoading && (
-                      <span className="text-xs text-[#8888aa]">
-                        Loading pages...
-                      </span>
-                    )}
-                    {!pagesLoading && sitePages.length === 0 && (
-                      <span className="text-xs text-[#8888aa]">
-                        No pages found
-                      </span>
-                    )}
-                    {!pagesLoading &&
-                      sitePages.map((page) => {
-                        const isHome =
-                          page.slug === "home" || page.slug === "/";
-                        const href = isHome ? "/" : `/${page.slug}`;
-                        return (
-                          <button
-                            key={page.id}
-                            type="button"
-                            onClick={() =>
-                              handleToggleChange("href", href)
-                            }
-                            className="px-2.5 py-1 rounded-full text-xs
-                            bg-[#6c63ff]/20 text-[#cfcdf8]
-                            border border-[#6c63ff]/40
-                            hover:bg-[#6c63ff]/30 transition-colors"
-                          >
-                            {page.name}
-                          </button>
-                        );
-                      })}
-                  </div>
+      {/* State Toggle */}
+      <div className="p-2 border-b border-[#222222]">
+          <div className="flex bg-[#111111] p-1 rounded-md">
+              <button 
+                  onClick={() => setStyleState('Normal')}
+                  className={`flex-1 text-center text-xs py-1.5 rounded-sm transition-colors ${styleState === 'Normal' ? 'bg-white text-black' : 'text-[#aaaaaa] hover:bg-[#222222]'}`}
+              >
+                  Normal
+              </button>
+              <button 
+                  onClick={() => setStyleState('Hover')}
+                  className={`flex-1 text-center text-xs py-1.5 rounded-sm transition-colors ${styleState === 'Hover' ? 'bg-white text-black' : 'text-[#aaaaaa] hover:bg-[#222222]'}`}
+              >
+                  :hover
+              </button>
+          </div>
+      </div>
+      
+      {/* Settings Sections */}
+      <div className="flex-grow overflow-y-auto">
+        {(selectedElement.type === "link" || selectedElement.type === "video" || selectedElement.type === "image") && (
+          <Section title="Content">
+            {selectedElement.type === "link" && (
+              <div className="flex flex-col gap-2">
+                <Label>Link Path (URL or /slug)</Label>
+                <Input id="href" placeholder="https://..." onChange={handleContentChange} value={selectedElement.content.href} />
+                <Label>Site Pages</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {sitePages.map(p => (
+                    <button key={p.id} onClick={() => handleContentChange({ target: { id: 'href', value: p.slug === 'home' ? '/' : `/${p.slug}`}})} className="px-2 py-0.5 text-xs rounded border border-[#333333] bg-[#111111] hover:border-white transition-colors">{p.name}</button>
+                  ))}
                 </div>
               </div>
             )}
-            {el.type === "video" && (
-              <div className="flex flex-col gap-1">
-                <Label>Video URL</Label>
-                <Input
-                  id="src"
-                  placeholder="https://youtube.com/embed/..."
-                  onChange={handleChangeCustomValues}
-                  value={el.content.src}
-                />
-              </div>
+            {selectedElement.type === "video" && (
+                <div className="flex flex-col gap-2"><Label>Video URL</Label><Input id="src" placeholder="https://youtube.com/embed/..." onChange={handleContentChange} value={selectedElement.content.src} /></div>
             )}
-            {el.type === "contactForm" && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <Label>Form Title</Label>
-                  <Input
-                    id="formTitle"
-                    placeholder="Want a free quote?"
-                    onChange={handleChangeCustomValues}
-                    value={el.content.formTitle}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label>Form Description</Label>
-                  <Input
-                    id="formDescription"
-                    placeholder="Get in touch"
-                    onChange={handleChangeCustomValues}
-                    value={el.content.formDescription}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label>Button Text</Label>
-                  <Input
-                    id="formButton"
-                    placeholder="Submit"
-                    onChange={handleChangeCustomValues}
-                    value={el.content.formButton}
-                  />
-                </div>
-              </>
-            )}
-            {el.type === "image" && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <Label>Image URL</Label>
-                  <Input
-                    id="src"
-                    placeholder="https://example.com/image.jpg"
-                    onChange={handleChangeCustomValues}
-                    value={el.content.src}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label>Alt Description</Label>
-                  <Input
-                    id="alt"
-                    placeholder="Image description"
-                    onChange={handleChangeCustomValues}
-                    value={el.content.alt}
-                  />
-                </div>
-              </>
+            {selectedElement.type === "image" && (
+                <>
+                <div className="flex flex-col gap-2"><Label>Image URL</Label><Input id="src" placeholder="https://..." onChange={handleContentChange} value={selectedElement.content.src} /></div>
+                <div className="flex flex-col gap-2"><Label>Alt Text</Label><Input id="alt" placeholder="Image description" onChange={handleContentChange} value={selectedElement.content.alt} /></div>
+                </>
             )}
           </Section>
         )}
 
-      {/* TYPOGRAPHY */}
-      <Section title="Typography">
-        <div className="flex flex-col gap-1">
-          <Label>Text Align</Label>
-          <div className="flex gap-1">
-            {[
-              { value: "left", icon: <AlignLeft className="w-4 h-4" />, title: "Left" },
-              { value: "center", icon: <AlignCenter className="w-4 h-4" />, title: "Center" },
-              { value: "right", icon: <AlignRight className="w-4 h-4" />, title: "Right" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.textAlign}
-                onChange={(v) => handleToggleChange("textAlign", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-
-        <ColorInput
-          label="Text Color"
-          value={activeStyles.color}
-          onChange={(v) => handleToggleChange("color", v)}
-        />
-
-        <div className="flex flex-col gap-1">
-          <Label>Text Decoration</Label>
-          <div className="flex gap-1">
-            {[
-              { value: "underline", icon: <Underline className="w-4 h-4" />, title: "Underline" },
-              { value: "underline dotted", icon: <GripHorizontal className="w-4 h-4" />, title: "Dotted" },
-              { value: "underline wavy", icon: <Waves className="w-4 h-4" />, title: "Wavy" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.textDecoration}
-                onChange={(v) => handleToggleChange("textDecoration", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Font Style</Label>
-          <div className="flex gap-1">
-            {[
-              { value: "italic", icon: <Italic className="w-4 h-4" />, title: "Italic" },
-              { value: "normal", icon: <Type className="w-4 h-4" />, title: "Normal" },
-              { value: "oblique", icon: <RemoveFormatting className="w-4 h-4" />, title: "Oblique" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.fontStyle}
-                onChange={(v) => handleToggleChange("fontStyle", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Font Weight</Label>
-          <SelectInput
-            value={activeStyles.fontWeight?.toString()}
-            onChange={(v) => handleToggleChange("fontWeight", v)}
-            placeholder="Select weight"
-            options={[
-              { value: "700", label: "Bold" },
-              { value: "600", label: "Semi-bold" },
-              { value: "500", label: "Medium" },
-              { value: "normal", label: "Regular" },
-              { value: "300", label: "Light" },
-              { value: "200", label: "Extra-light" },
-            ]}
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <div className="flex flex-col gap-1 flex-1">
-            <Label>Font Size</Label>
-            <Input
-              id="fontSize"
-              placeholder="16px"
-              onChange={handleOnChanges}
-              value={activeStyles.fontSize}
-            />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <Label>Line Height</Label>
-            <Input
-              id="lineHeight"
-              placeholder="1.5rem"
-              onChange={handleOnChanges}
-              value={activeStyles.lineHeight}
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* DECORATIONS */}
-      <Section title="Decorations">
-        <div className="flex flex-col gap-1">
-          <Label>Opacity</Label>
-          <SliderInput
-            value={activeStyles?.opacity}
-            onChange={(v) => handleToggleChange("opacity", v)}
-            unit="%"
-          />
-        </div>
-
-        <ColorInput
-          label="Border Color"
-          value={activeStyles.borderColor}
-          onChange={(v) => handleToggleChange("borderColor", v)}
-        />
-
-        <div className="flex flex-col gap-1">
-          <Label>Border Width</Label>
-          <SliderInput
-            value={activeStyles?.borderWidth}
-            onChange={(v) => handleToggleChange("borderWidth", v)}
-            unit="px"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Border Radius</Label>
-          <SliderInput
-            value={activeStyles?.borderRadius}
-            onChange={(v) => handleToggleChange("borderRadius", v)}
-            unit="px"
-          />
-        </div>
-
-        <ColorInput
-          label="Background Color"
-          value={activeStyles.backgroundColor || activeStyles.background}
-          onChange={(v) => handleToggleChange("backgroundColor", v)}
-        />
-
-        <div className="flex flex-col gap-1">
-          <Label>Background Image</Label>
-          <Input
-            id="backgroundImage"
-            placeholder="url(https://...)"
-            onChange={handleOnChanges}
-            value={activeStyles.backgroundImage}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Background Size</Label>
-          <div className="flex gap-1">
-            {[
-              { value: "cover", icon: <Expand className="w-4 h-4" />, title: "Cover" },
-              { value: "contain", icon: <Shrink className="w-4 h-4" />, title: "Contain" },
-              { value: "auto", icon: <LucideImageDown className="w-4 h-4" />, title: "Auto" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.backgroundSize?.toString()}
-                onChange={(v) => handleToggleChange("backgroundSize", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* LAYOUT */}
-      <Section title="Layout">
-        <div className="flex flex-col gap-1">
-          <Label>Display</Label>
-          <SelectInput
-            value={activeStyles.display}
-            onChange={(v) => handleToggleChange("display", v)}
-            placeholder="Select display"
-            options={[
-              { value: "flex", label: "Flex" },
-              { value: "inline-flex", label: "Inline Flex" },
-              { value: "inline", label: "Inline" },
-              { value: "block", label: "Block" },
-              { value: "inline-block", label: "Inline Block" },
-            ]}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Justify Content</Label>
-          <div className="flex gap-1 flex-wrap">
-            {[
-              { value: "space-between", icon: <AlignHorizontalSpaceBetween className="w-4 h-4" />, title: "Space Between" },
-              { value: "space-around", icon: <AlignHorizontalSpaceAround className="w-4 h-4" />, title: "Space Around" },
-              { value: "center", icon: <AlignHorizontalJustifyCenterIcon className="w-4 h-4" />, title: "Center" },
-              { value: "flex-start", icon: <AlignHorizontalJustifyStart className="w-4 h-4" />, title: "Start" },
-              { value: "flex-end", icon: <AlignHorizontalJustifyEnd className="w-4 h-4" />, title: "End" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.justifyContent}
-                onChange={(v) => handleToggleChange("justifyContent", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Align Items</Label>
-          <div className="flex gap-1">
-            {[
-              { value: "center", icon: <AlignVerticalJustifyCenter className="w-4 h-4" />, title: "Center" },
-              { value: "flex-start", icon: <AlignVerticalJustifyStart className="w-4 h-4" />, title: "Start" },
-              { value: "flex-end", icon: <AlignVerticalJustifyEnd className="w-4 h-4" />, title: "End" },
-            ].map((btn) => (
-              <ToggleBtn
-                key={btn.value}
-                value={btn.value}
-                current={activeStyles.alignItems}
-                onChange={(v) => handleToggleChange("alignItems", v)}
-                title={btn.title}
-              >
-                {btn.icon}
-              </ToggleBtn>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <Label>Direction</Label>
-          <SelectInput
-            value={activeStyles.flexDirection}
-            onChange={(v) => handleToggleChange("flexDirection", v)}
-            placeholder="Select direction"
-            options={[
-              { value: "row", label: "Row" },
-              { value: "column", label: "Column" },
-              { value: "row-reverse", label: "Row Reverse" },
-              { value: "column-reverse", label: "Column Reverse" },
-            ]}
-          />
-        </div>
-      </Section>
-
-      {/* DIMENSIONS */}
-      <Section title="Dimensions">
-        <div className="flex gap-3">
-          <div className="flex flex-col gap-1 flex-1">
-            <Label>Height</Label>
-            <Input
-              id="height"
-              placeholder="px"
-              onChange={handleOnChanges}
-              value={activeStyles.height}
-            />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <Label>Width</Label>
-            <Input
-              id="width"
-              placeholder="px"
-              onChange={handleOnChanges}
-              value={activeStyles.width}
-            />
-          </div>
-        </div>
-
-        <Label className="text-center w-full">Margin (px)</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {["marginTop", "marginBottom", "marginLeft", "marginRight"].map((id) => (
-            <div key={id} className="flex flex-col gap-1">
-              <Label>{id.replace("margin", "")}</Label>
-              <Input
-                id={id}
-                placeholder="px"
-                onChange={handleOnChanges}
-                value={activeStyles[id]}
-              />
+        <Section title="Layout & Position">
+          <ToggleBtnGroup title="Display" onChange={(v) => handleStyleChange('display', v)} value={activeStyles.display} options={[ { value: 'block', icon: <div className="w-4 h-4 border-2 border-current" />, title: 'Block'}, { value: 'flex', icon: <div className="w-4 h-4 border-2 border-current flex gap-0.5 p-0.5"><div className="w-1/2 h-full bg-current" /><div className="w-1/2 h-full bg-current" /></div>, title: 'Flex'}, { value: 'grid', icon: <div className="w-4 h-4 border-2 border-current grid grid-cols-2 gap-0.5 p-0.5"><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/></div>, title: 'Grid'}, { value: 'none', icon: <EyeOff className="w-4 h-4" />, title: 'None'}]}/>
+          {activeStyles.display === 'flex' && (
+            <div className="p-3 rounded bg-[#0a0a0a] border border-[#222222] flex flex-col gap-3">
+              <SelectInput label="Direction" options={[{value: 'row', label: 'Row'}, {value: 'column', label: 'Column'}]} value={activeStyles.flexDirection} onChange={(v) => handleStyleChange('flexDirection', v)} />
+              <ToggleBtnGroup title="Justify" onChange={(v) => handleStyleChange('justifyContent', v)} value={activeStyles.justifyContent} options={[{value: 'flex-start', icon: <AlignHorizontalJustifyStart className="w-4 h-4" />, title: 'Start'}, {value: 'center', icon: <AlignHorizontalJustifyCenterIcon className="w-4 h-4" />, title: 'Center'}, {value: 'flex-end', icon: <AlignHorizontalJustifyEnd className="w-4 h-4" />, title: 'End'}, {value: 'space-between', icon: <AlignHorizontalSpaceBetween className="w-4 h-4" />, title: 'Space Between'}]} />
+              <ToggleBtnGroup title="Align" onChange={(v) => handleStyleChange('alignItems', v)} value={activeStyles.alignItems} options={[{value: 'flex-start', icon: <AlignVerticalJustifyStart className="w-4 h-4" />, title: 'Start'}, {value: 'center', icon: <AlignVerticalJustifyCenter className="w-4 h-4" />, title: 'Center'}, {value: 'flex-end', icon: <AlignVerticalJustifyEnd className="w-4 h-4" />, title: 'End'}]} />
             </div>
-          ))}
-        </div>
-
-        <Label className="text-center w-full">Padding (px)</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"].map((id) => (
-            <div key={id} className="flex flex-col gap-1">
-              <Label>{id.replace("padding", "")}</Label>
-              <Input
-                id={id}
-                placeholder="px"
-                onChange={handleOnChanges}
-                value={activeStyles[id]}
-              />
+          )}
+          <div className="flex flex-col gap-2">
+            <Label>Position</Label>
+            <SelectInput options={[{value: 'static', label: 'Static'}, {value: 'relative', label: 'Relative'}, {value: 'absolute', label: 'Absolute'}, {value: 'fixed', label: 'Fixed'}, {value: 'sticky', label: 'Sticky'}]} value={activeStyles.position} onChange={(v) => handleStyleChange('position', v)} />
+          </div>
+          {['absolute', 'fixed', 'sticky'].includes(activeStyles.position) && (
+             <FourWayInput label="" values={activeStyles} onChange={handleBulkStyleChange} />
+          )}
+          <div className="flex flex-col gap-2"><Label>Z-Index</Label><Input id="zIndex" value={activeStyles.zIndex} onChange={handleBulkStyleChange} /></div>
+          <div className="flex flex-col gap-2"><Label>Overflow</Label><SelectInput options={[{value: 'visible', label: 'Visible'}, {value: 'hidden', label: 'Hidden'}, {value: 'scroll', label: 'Scroll'}, {value: 'auto', label: 'Auto'}]} value={activeStyles.overflow} onChange={(v) => handleStyleChange('overflow', v)} /></div>
+        </Section>
+        
+        <Section title="Sizing & Spacing">
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1"><Label>Width</Label><Input id="width" value={activeStyles.width} onChange={handleBulkStyleChange} /></div>
+                <div className="flex flex-col gap-1"><Label>Height</Label><Input id="height" value={activeStyles.height} onChange={handleBulkStyleChange} /></div>
+                <div className="flex flex-col gap-1"><Label>Min W</Label><Input id="minWidth" value={activeStyles.minWidth} onChange={handleBulkStyleChange} /></div>
+                <div className="flex flex-col gap-1"><Label>Min H</Label><Input id="minHeight" value={activeStyles.minHeight} onChange={handleBulkStyleChange} /></div>
             </div>
-          ))}
-        </div>
-      </Section>
+            <FourWayInput label="padding" values={activeStyles} onChange={handleBulkStyleChange} />
+            <FourWayInput label="margin" values={activeStyles} onChange={handleBulkStyleChange} />
+        </Section>
+        
+        <Section title="Typography">
+          <div className="flex flex-col gap-2"><Label>Font Family</Label><SelectInput options={GOOGLE_FONTS.map(f => ({value: f, label: f}))} placeholder="Select Font" value={activeStyles.fontFamily} onChange={(v) => handleStyleChange('fontFamily', v)}/></div>
+          <ColorInput label="Color" value={activeStyles.color} onChange={(v) => handleStyleChange("color", v)} />
+          <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1"><Label>Size</Label><Input id="fontSize" value={activeStyles.fontSize} onChange={handleBulkStyleChange} placeholder="16px"/></div>
+              <div className="flex flex-col gap-1"><Label>Weight</Label><Input id="fontWeight" value={activeStyles.fontWeight} onChange={handleBulkStyleChange} placeholder="400" /></div>
+          </div>
+          <ToggleBtnGroup title="Align" onChange={(v) => handleStyleChange('textAlign', v)} value={activeStyles.textAlign} options={[{ value: "left", icon: <AlignLeft className="w-4 h-4" />, title: "Left" }, { value: "center", icon: <AlignCenter className="w-4 h-4" />, title: "Center" }, { value: "right", icon: <AlignRight className="w-4 h-4" />, title: "Right" }]}/>
+        </Section>
+
+        <Section title="Decorations">
+            <div className="flex flex-col gap-2">
+              <Label>Opacity</Label>
+              <SliderInput min={0} max={1} step={0.01} value={activeStyles.opacity} onChange={(v) => handleStyleChange('opacity', v)} />
+            </div>
+            <ColorInput label="Background" value={activeStyles.background} onChange={(v) => handleStyleChange("background", v)} />
+            {/* Simple Gradient Builder */}
+            <div className="p-3 rounded bg-[#0a0a0a] border border-[#222222] flex flex-col gap-3">
+              <Label className="text-center">Simple Linear Gradient</Label>
+              <Input id="gradient-angle" placeholder="Angle (e.g. 90deg)" onChange={(e) => handleStyleChange('background', `linear-gradient(${e.target.value}, ${activeStyles.background?.split(',')[1] || '#000'}, ${activeStyles.background?.split(',')[2] || '#fff'})`)} />
+              <Input id="gradient-from" placeholder="From Color (#...)" onChange={(e) => handleStyleChange('background', `linear-gradient(${activeStyles.background?.split('(')[1]?.split(',')[0] || '90deg'}, ${e.target.value}, ${activeStyles.background?.split(',')[2] || '#fff'})`)} />
+              <Input id="gradient-to" placeholder="To Color (#...)" onChange={(e) => handleStyleChange('background', `linear-gradient(${activeStyles.background?.split('(')[1]?.split(',')[0] || '90deg'}, ${activeStyles.background?.split(',')[1] || '#000'}, ${e.target.value})`)} />
+            </div>
+            <div className="flex flex-col gap-2"><Label>Border Radius</Label><Input id="borderRadius" value={activeStyles.borderRadius} onChange={handleBulkStyleChange} placeholder="0px"/></div>
+            <div className="flex flex-col gap-2"><Label>Border</Label><Input id="border" value={activeStyles.border} onChange={handleBulkStyleChange} placeholder="1px solid #222222"/></div>
+            <div className="flex flex-col gap-2"><Label>Box Shadow</Label><BoxShadowBuilder value={activeStyles.boxShadow} onChange={(v) => handleStyleChange('boxShadow', v)} /></div>
+        </Section>
+
+        <Section title="Transforms">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1"><Label>Translate X</Label><Input id="transform.translateX" placeholder="0px" /></div>
+            <div className="flex flex-col gap-1"><Label>Translate Y</Label><Input id="transform.translateY" placeholder="0px" /></div>
+            <div className="flex flex-col gap-1"><Label>Scale</Label><Input id="transform.scale" placeholder="1"/></div>
+            <div className="flex flex-col gap-1"><Label>Rotate</Label><Input id="transform.rotate" placeholder="0deg"/></div>
+          </div>
+        </Section>
+
+        <Section title="Transitions">
+          <div className="flex flex-col gap-2"><Label>Property</Label><Input id="transitionProperty" value={activeStyles.transitionProperty} onChange={handleBulkStyleChange} placeholder="all"/></div>
+          <div className="flex flex-col gap-2"><Label>Duration</Label><Input id="transitionDuration" value={activeStyles.transitionDuration} onChange={handleBulkStyleChange} placeholder="0.3s"/></div>
+          <div className="flex flex-col gap-2"><Label>Timing Function</Label><Input id="transitionTimingFunction" value={activeStyles.transitionTimingFunction} onChange={handleBulkStyleChange} placeholder="ease-in-out"/></div>
+          <div className="flex flex-col gap-2"><Label>Delay</Label><Input id="transitionDelay" value={activeStyles.transitionDelay} onChange={handleBulkStyleChange} placeholder="0s"/></div>
+        </Section>
+
+        <Section title="Animations (WIP)">
+           <div className="flex flex-col gap-2"><Label>Scroll Animation</Label><SelectInput options={[{value: 'none', label: 'None'},{value: 'fadeIn', label: 'Fade In'}, {value: 'slideInLeft', label: 'Slide In Left'}, {value: 'slideInRight', label: 'Slide In Right'}]} /></div>
+        </Section>
+        
+        <Section title="Custom CSS">
+            <div className="flex flex-col gap-2">
+                <Label>Add your own CSS</Label>
+                <textarea 
+                    placeholder="selector { color: white; }"
+                    className="w-full h-32 p-2.5 text-sm font-mono rounded bg-black border border-[#222222] text-white placeholder:text-[#666666] outline-none focus:border-white transition-all resize-none"
+                />
+            </div>
+        </Section>
+      </div>
     </div>
   );
 };
