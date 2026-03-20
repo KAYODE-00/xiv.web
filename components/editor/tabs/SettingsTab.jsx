@@ -471,10 +471,10 @@ const SettingsTab = () => {
         </Section>
 
         <Section title="Animations (WIP)">
-           <div className="flex flex-col gap-2"><Label>Scroll Animation</Label><SelectInput value={selectedElement.content?.scrollAnimation || "none"} onChange={(v) => handleContentChange({ target: { id: "scrollAnimation", value: v } })} options={[{value: 'none', label: 'None'},{value: 'fadeIn', label: 'Fade In'}, {value: 'slideInLeft', label: 'Slide In Left'}, {value: 'slideInRight', label: 'Slide In Right'}]} /></div>
+           <div className="flex flex-col gap-2"><Label>Scroll Animation</Label><SelectInput value={activeStyles.scrollAnimation || "none"} onChange={(v) => handleStyleChange("scrollAnimation", v)} options={[{value: 'none', label: 'None'},{value: 'fadeIn', label: 'Fade In'}, {value: 'slideInLeft', label: 'Slide In Left'}, {value: 'slideInRight', label: 'Slide In Right'}]} /></div>
            <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1"><Label>Duration (s)</Label><Input id="animationDuration" value={selectedElement.content?.animationDuration} placeholder="0.6" onChange={handleContentChange} /></div>
-            <div className="flex flex-col gap-1"><Label>Delay (s)</Label><Input id="animationDelay" value={selectedElement.content?.animationDelay} placeholder="0" onChange={handleContentChange} /></div>
+            <div className="flex flex-col gap-1"><Label>Duration (s)</Label><Input id="animationDuration" value={activeStyles.animationDuration} placeholder="0.6" onChange={(e) => handleStyleChange("animationDuration", e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><Label>Delay (s)</Label><Input id="animationDelay" value={activeStyles.animationDelay} placeholder="0" onChange={(e) => handleStyleChange("animationDelay", e.target.value)} /></div>
            </div>
         </Section>
         
@@ -483,8 +483,8 @@ const SettingsTab = () => {
                 <Label>Add your own CSS</Label>
                 <textarea 
                     placeholder="selector { color: white; }"
-                    value={selectedElement.content?.customCss || ""}
-                    onChange={(e) => handleContentChange({ target: { id: "customCss", value: e.target.value } })}
+                    value={activeStyles.customCss || ""}
+                    onChange={(e) => handleStyleChange("customCss", e.target.value)}
                     className="w-full h-32 p-2.5 text-sm font-mono rounded bg-black border border-[#222222] text-white placeholder:text-[#666666] outline-none focus:border-white transition-all resize-none"
                 />
             </div>

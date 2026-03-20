@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Trash } from "lucide-react";
 import { useEditor } from "@/hooks/use-editor";
 import { createClient } from "@supabase/supabase-js";
-import { resolveDeviceStyles } from "@/lib/editor/utils";
+import { resolveElementStateStyles } from "@/lib/editor/utils";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 const getSupabaseClient = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -86,7 +87,12 @@ const EditorContact = ({ element }) => {
   const { dispatch, editor: editorState, siteId } = useEditor();
   const { editor } = editorState;
   const device = editor.device;
-  const deviceStyles = resolveDeviceStyles(element.styles, device);
+  const [isHovering, setIsHovering] = React.useState(false);
+  let deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  const customCss = deviceStyles?.customCss || "";
+  if (deviceStyles && Object.prototype.hasOwnProperty.call(deviceStyles, "customCss")) {
+    delete deviceStyles.customCss;
+  }
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
@@ -137,6 +143,9 @@ const EditorContact = ({ element }) => {
   return (
     <div
       onClick={handleOnClickBody}
+      data-xiv-id={element.id}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       className={`
         p-[2px] w-full m-[5px] relative
         text-base transition-all
@@ -148,6 +157,13 @@ const EditorContact = ({ element }) => {
         }
       `}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(element.id, customCss),
+          }}
+        />
+      )}
       {/* Element name badge */}
       {isSelected && !isLive && (
         <div className="absolute -top-[23px] -left-[1px]

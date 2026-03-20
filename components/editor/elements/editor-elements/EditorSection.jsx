@@ -7,6 +7,7 @@ import { useEditor } from "@/hooks/use-editor";
 import EditorRecursive from "./EditorRecursive";
 import { resolveElementStateStyles } from "@/lib/editor/utils";
 import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 // Helper to find parent of an element
 const findParent = (elements, targetId) => {
@@ -28,16 +29,25 @@ const EditorSection = ({ element }) => {
   const { editor } = editorState;
   const device = editor.device;
   const [isHovering, setIsHovering] = React.useState(false);
-  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  let deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  const customCss = deviceStyles?.customCss || "";
+  if (deviceStyles && Object.prototype.hasOwnProperty.call(deviceStyles, "customCss")) {
+    delete deviceStyles.customCss;
+  }
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
   const sectionRef = React.useRef(null);
-  const motionProps = getMotionProps(element.content, isLive);
+  const motionProps = getMotionProps(deviceStyles, isLive);
 
   React.useEffect(() => {
-    return setupScrollAnimation(sectionRef.current, element.content, isLive);
-  }, [element.content, isLive]);
+    return setupScrollAnimation(sectionRef.current, deviceStyles, isLive);
+  }, [
+    deviceStyles?.scrollAnimation,
+    deviceStyles?.animationDuration,
+    deviceStyles?.animationDelay,
+    isLive,
+  ]);
 
   const handleDeleteElement = () => {
     dispatch({
@@ -102,12 +112,20 @@ const EditorSection = ({ element }) => {
       animate={motionProps.animate}
       transition={motionProps.transition}
       style={deviceStyles}
+      data-xiv-id={element.id}
       className={getSectionStyles()}
       id="innerContainer"
       onClick={handleOnClickBody}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(element.id, customCss),
+          }}
+        />
+      )}
       {/* Element name badge */}
       {isSelected && !isLive && (
         <div className="absolute -top-[23px] -left-[1px]

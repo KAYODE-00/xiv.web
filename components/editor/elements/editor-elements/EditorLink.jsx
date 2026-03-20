@@ -8,6 +8,7 @@ import { useEditor } from "@/hooks/use-editor";
 import { formatTextOnKeyboard, resolveElementStateStyles } from "@/lib/editor/utils";
 import { getSitePages } from "@/lib/actions/pages";
 import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 const findParent = (elements, targetId) => {
   for (const el of elements) {
@@ -29,17 +30,27 @@ const EditorLink = ({ element }) => {
   const [pages, setPages] = React.useState([]);
   const device = editor.device;
   const [isHovering, setIsHovering] = React.useState(false);
-  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  let deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  const customCss = deviceStyles?.customCss || "";
+  if (deviceStyles && Object.prototype.hasOwnProperty.call(deviceStyles, "customCss")) {
+    delete deviceStyles.customCss;
+  }
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
   const isPreview = editor.previewMode;
   const linkRef = React.useRef(null);
-  const motionProps = getMotionProps(element.content, isLive || isPreview);
+  const motionProps = getMotionProps(deviceStyles, isLive || isPreview);
 
   React.useEffect(() => {
-    return setupScrollAnimation(linkRef.current, element.content, isLive || isPreview);
-  }, [element.content, isLive, isPreview]);
+    return setupScrollAnimation(linkRef.current, deviceStyles, isLive || isPreview);
+  }, [
+    deviceStyles?.scrollAnimation,
+    deviceStyles?.animationDuration,
+    deviceStyles?.animationDelay,
+    isLive,
+    isPreview,
+  ]);
 
   React.useEffect(() => {
     let isActive = true;
@@ -191,6 +202,7 @@ const EditorLink = ({ element }) => {
       animate={motionProps.animate}
       transition={motionProps.transition}
       style={deviceStyles}
+      data-xiv-id={element.id}
       draggable={!isLive}
       onClick={(e) => {
         if (isPreview || isLive) return;
@@ -205,6 +217,13 @@ const EditorLink = ({ element }) => {
         ${isSelected && !isLive ? "!border-solid !border-blue-500" : ""}
       `}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(element.id, customCss),
+          }}
+        />
+      )}
       {/* Floating toolbar */}
       {isSelected && !isLive && !isPreview && (
         <div

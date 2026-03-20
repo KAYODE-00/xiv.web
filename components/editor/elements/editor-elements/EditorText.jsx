@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEditor } from "@/hooks/use-editor";
 import { formatTextOnKeyboard, resolveElementStateStyles } from "@/lib/editor/utils";
 import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 const findParent = (elements, targetId) => {
   for (const el of elements) {
@@ -25,17 +26,27 @@ const EditorText = ({ element }) => {
   const { editor } = editorState;
   const device = editor.device;
   const [isHovering, setIsHovering] = React.useState(false);
-  const deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  let deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  const customCss = deviceStyles?.customCss || "";
+  if (deviceStyles && Object.prototype.hasOwnProperty.call(deviceStyles, "customCss")) {
+    delete deviceStyles.customCss;
+  }
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
   const isPreview = editor.previewMode;
   const textRef = React.useRef(null);
-  const motionProps = getMotionProps(element.content, isLive || isPreview);
+  const motionProps = getMotionProps(deviceStyles, isLive || isPreview);
 
   React.useEffect(() => {
-    return setupScrollAnimation(textRef.current, element.content, isLive || isPreview);
-  }, [element.content, isLive, isPreview]);
+    return setupScrollAnimation(textRef.current, deviceStyles, isLive || isPreview);
+  }, [
+    deviceStyles?.scrollAnimation,
+    deviceStyles?.animationDuration,
+    deviceStyles?.animationDelay,
+    isLive,
+    isPreview,
+  ]);
 
   const handleDeleteElement = () => {
     dispatch({
@@ -87,6 +98,7 @@ const EditorText = ({ element }) => {
       animate={motionProps.animate}
       transition={motionProps.transition}
       style={deviceStyles}
+      data-xiv-id={element.id}
       onClick={handleClickOnBody}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -100,6 +112,13 @@ const EditorText = ({ element }) => {
         }
       `}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(element.id, customCss),
+          }}
+        />
+      )}
       {/* Floating toolbar */}
       {isSelected && !isLive && !isPreview && (
         <div

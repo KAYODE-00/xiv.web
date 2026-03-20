@@ -4,13 +4,19 @@ import React from "react";
 import { toast } from "sonner";
 import { Trash } from "lucide-react";
 import { useEditor } from "@/hooks/use-editor";
-import { resolveDeviceStyles } from "@/lib/editor/utils";
+import { resolveElementStateStyles } from "@/lib/editor/utils";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 const EditorPayment = ({ element }) => {
   const { editor: editorState, dispatch, siteId } = useEditor();
   const { editor } = editorState;
   const device = editor.device;
-  const deviceStyles = resolveDeviceStyles(element.styles, device);
+  const [isHovering, setIsHovering] = React.useState(false);
+  let deviceStyles = resolveElementStateStyles(element.styles, device, isHovering);
+  const customCss = deviceStyles?.customCss || "";
+  if (deviceStyles && Object.prototype.hasOwnProperty.call(deviceStyles, "customCss")) {
+    delete deviceStyles.customCss;
+  }
 
   const isSelected = editor.selectedElement.id === element.id;
   const isLive = editor.liveMode;
@@ -61,8 +67,11 @@ const EditorPayment = ({ element }) => {
   return (
     <div
       style={deviceStyles}
+      data-xiv-id={element.id}
       draggable
       onClick={handleOnClickBody}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       className={`
         p-0.5 w-full m-1 relative text-base
         min-h-7 transition-all
@@ -74,6 +83,13 @@ const EditorPayment = ({ element }) => {
         }
       `}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(element.id, customCss),
+          }}
+        />
+      )}
       {/* Element name badge */}
       {isSelected && !isLive && (
         <div className="absolute -top-6 -left-0.5

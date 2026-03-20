@@ -8,6 +8,7 @@ import EditorRecursive from "./EditorRecursive";
 import { addVerifyElement } from "@/lib/editor/add-verify-element";
 import { getMotionProps, setupScrollAnimation } from "@/lib/editor/animations";
 import { resolveElementStateStyles } from "@/lib/editor/utils";
+import { getScopedCss } from "@/lib/editor/runtime-styles";
 
 const EditorContainer = ({ element }) => {
   const { content, id, styles, type } = element;
@@ -101,12 +102,25 @@ const EditorContainer = ({ element }) => {
     }
   };
   
-  const containerStyles = getActiveStyles();
-  const motionProps = getMotionProps(element.content, isLive);
+  let containerStyles = getActiveStyles();
+  const customCss = containerStyles?.customCss || "";
+  if (containerStyles && Object.prototype.hasOwnProperty.call(containerStyles, "customCss")) {
+    delete containerStyles.customCss;
+  }
+  const motionProps = getMotionProps(containerStyles, isLive);
 
   React.useEffect(() => {
-    return setupScrollAnimation(containerRef.current, element.content, isLive);
-  }, [element.content, isLive]);
+    return setupScrollAnimation(
+      containerRef.current,
+      containerStyles,
+      isLive
+    );
+  }, [
+    containerStyles?.scrollAnimation,
+    containerStyles?.animationDuration,
+    containerStyles?.animationDelay,
+    isLive,
+  ]);
 
   // Remove conflicting background properties if both exist
   if (containerStyles.background && containerStyles.backgroundImage) {
@@ -119,6 +133,7 @@ const EditorContainer = ({ element }) => {
       initial={motionProps.initial}
       animate={motionProps.animate}
       transition={motionProps.transition}
+      data-xiv-id={id}
       style={containerStyles}
       className={`relative transition-all ${
         isSelected && !isLive ? 'border-2 border-white' : isLive ? '' : 'border border-dashed border-[#222222]'
@@ -129,6 +144,13 @@ const EditorContainer = ({ element }) => {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
+      {customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getScopedCss(id, customCss),
+          }}
+        />
+      )}
       {/* Element name badge */}
       {isSelected && !isLive && !isBody && (
         <div className="absolute -top-6 -left-[1px] bg-white text-black text-xs font-bold px-2 py-0.5 rounded-t-sm z-10">
